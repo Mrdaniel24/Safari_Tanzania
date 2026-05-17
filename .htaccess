@@ -1,0 +1,10 @@
+# Hide PHP version
+ServerSignature Off
+
+# Disable directory listing
+Options -Indexes
+
+# Protect config folder
+<FilesMatch "\.(sql|md)$">
+  Require all denied
+</FilesMatch>

@@ -1,0 +1,329 @@
+/* Safari Tanzania Owner - estate theme overrides */
+:root {
+  --owner-bg: #f4f3ef;
+  --owner-panel: #ffffff;
+  --owner-ink: #202020;
+  --owner-text: #444444;
+  --owner-muted: #737373;
+  --owner-line: rgba(0,0,0,0.08);
+  --owner-gold: #b4873d;
+  --owner-gold-soft: #f1e5cf;
+  --owner-dark: #071027;
+  --owner-shadow: 0 18px 44px rgba(0,0,0,0.08);
+}
+
+.owner-shell,
+.owner-shell * {
+  font-family: Arial, Helvetica, sans-serif !important;
+}
+
+.owner-shell .material-symbols-outlined {
+  font-family: 'Material Symbols Outlined' !important;
+  font-weight: normal !important;
+  font-style: normal !important;
+  line-height: 1 !important;
+  letter-spacing: normal !important;
+  text-transform: none !important;
+  white-space: nowrap;
+  direction: ltr;
+  -webkit-font-feature-settings: 'liga';
+  -webkit-font-smoothing: antialiased;
+}
+
+body.owner-shell {
+  background: var(--owner-bg) !important;
+  color: var(--owner-text) !important;
+}
+
+.owner-page,
+.owner-shell main {
+  background: var(--owner-bg) !important;
+}
+
+.owner-sidebar {
+  background: #fff !important;
+  color: var(--owner-text) !important;
+  border-right: 1px solid var(--owner-line) !important;
+  box-shadow: 18px 0 48px rgba(0,0,0,0.08) !important;
+}
+
+.owner-sidebar::after {
+  content: none !important;
+}
+
+.owner-logo {
+  display: flex;
+  justify-content: center;
+  padding: 22px 8px 28px !important;
+}
+
+.owner-logo img {
+  width: 108px !important;
+  max-height: none !important;
+  filter: none !important;
+}
+
+.owner-mini-card {
+  background: #f8f5ef !important;
+  border: 1px solid var(--owner-line) !important;
+  box-shadow: none !important;
+  border-radius: 10px !important;
+}
+
+.owner-mini-card img {
+  border-radius: 999px !important;
+  border: 2px solid var(--owner-gold) !important;
+}
+
+.owner-mini-card .text-white,
+.owner-mini-card div {
+  color: var(--owner-ink) !important;
+}
+
+.owner-mini-card .text-cyan-100\/75 {
+  color: var(--owner-muted) !important;
+}
+
+.owner-nav-link {
+  color: #4b4b4b !important;
+  background: transparent !important;
+  border: 1px solid transparent !important;
+  border-radius: 10px !important;
+  font-weight: 650 !important;
+  transform: none !important;
+}
+
+.owner-nav-link span,
+.owner-nav-link .material-symbols-outlined {
+  color: inherit !important;
+}
+
+.owner-nav-link:hover {
+  color: var(--owner-ink) !important;
+  background: #f7f3eb !important;
+  border-color: rgba(180,135,61,0.18) !important;
+  transform: none !important;
+}
+
+.owner-nav-link.is-active {
+  color: #fff !important;
+  background: var(--owner-gold) !important;
+  box-shadow: 0 12px 26px rgba(180,135,61,0.24) !important;
+}
+
+.owner-nav-link.is-active span,
+.owner-nav-link.is-active .material-symbols-outlined {
+  color: #fff !important;
+}
+
+.owner-sidebar .border-white\/10 {
+  border-color: var(--owner-line) !important;
+}
+
+.owner-topbar {
+  background: rgba(244,243,239,0.94) !important;
+  border-bottom: 1px solid var(--owner-line) !important;
+  box-shadow: 0 10px 28px rgba(0,0,0,0.06) !important;
+}
+
+.owner-topbar > div,
+.owner-shell main > div.max-w-7xl,
+.owner-shell main > div.max-w-5xl,
+.owner-dashboard-inner,
+.owner-shell footer > div {
+  max-width: none !important;
+}
+
+.owner-topbar p,
+.owner-shell .text-primary,
+.owner-panel-head a {
+  color: var(--owner-gold) !important;
+}
+
+.owner-topbar h1,
+.owner-shell h1,
+.owner-shell h2,
+.owner-shell h3,
+.owner-shell h4,
+.owner-shell .text-ink,
+.owner-shell .text-zinc-900,
+.owner-shell .text-slate-900 {
+  color: var(--owner-ink) !important;
+  letter-spacing: 0 !important;
+}
+
+.owner-action,
+.owner-btn.primary,
+.owner-shell .bg-primary,
+.owner-shell .bg-blue-700,
+.owner-shell .bg-sky-700 {
+  background: var(--owner-gold) !important;
+  color: #fff !important;
+  border-color: var(--owner-gold) !important;
+  box-shadow: 0 12px 26px rgba(180,135,61,0.22) !important;
+}
+
+.owner-action,
+.owner-btn,
+.owner-shell button,
+.owner-shell a[class*="rounded"] {
+  border-radius: 999px !important;
+}
+
+.owner-dashboard {
+  padding: 30px !important;
+}
+
+.owner-hero {
+  border-radius: 10px !important;
+  background:
+    linear-gradient(90deg, rgba(0,0,0,.58), rgba(0,0,0,.18)),
+    url('../images/hero-bg.png') center/cover no-repeat !important;
+  box-shadow: var(--owner-shadow) !important;
+}
+
+.owner-hero::after {
+  content: none !important;
+}
+
+.owner-hero h2 {
+  color: #fff !important;
+  text-shadow: 0 10px 28px rgba(0,0,0,.45);
+}
+
+.owner-hero p {
+  color: rgba(255,255,255,.86) !important;
+}
+
+.owner-kicker {
+  color: #d3a34e !important;
+}
+
+.owner-btn.secondary {
+  background: rgba(255,255,255,0.12) !important;
+  border-color: rgba(255,255,255,0.32) !important;
+  color: #fff !important;
+}
+
+.owner-stat,
+.owner-panel,
+.owner-action-card,
+.owner-shell .bg-white {
+  background: #fff !important;
+  border: 1px solid var(--owner-line) !important;
+  border-radius: 10px !important;
+  box-shadow: var(--owner-shadow) !important;
+}
+
+.owner-stat-icon,
+.owner-action-card .icon,
+.owner-verify-icon {
+  background: var(--owner-gold) !important;
+  color: #fff !important;
+  box-shadow: none !important;
+}
+
+.owner-stat strong,
+.owner-booking-title,
+.owner-action-card h4 {
+  color: var(--owner-ink) !important;
+}
+
+.owner-stat small,
+.owner-booking-meta,
+.owner-action-card p,
+.owner-shell .text-zinc-500,
+.owner-shell .text-zinc-400,
+.owner-shell .text-slate-500,
+.owner-shell .text-slate-400 {
+  color: var(--owner-muted) !important;
+}
+
+.owner-verify {
+  background: #f8f5ef !important;
+}
+
+.owner-shell thead,
+.owner-shell .bg-zinc-50,
+.owner-shell .bg-slate-50 {
+  background: #f7f3eb !important;
+}
+
+.owner-shell th {
+  color: #73614a !important;
+}
+
+.owner-shell td {
+  color: var(--owner-text) !important;
+}
+
+.owner-shell tbody tr:hover,
+.owner-shell .hover\:bg-zinc-50:hover,
+.owner-shell .hover\:bg-slate-50:hover {
+  background: #faf7f0 !important;
+}
+
+.owner-shell .bg-blue-50,
+.owner-shell .bg-sky-50,
+.owner-shell .bg-purple-50,
+.owner-shell .bg-emerald-50 {
+  background: var(--owner-gold-soft) !important;
+}
+
+.owner-shell .text-blue-600,
+.owner-shell .text-sky-700,
+.owner-shell .text-purple-700,
+.owner-shell .text-emerald-700 {
+  color: #8a6220 !important;
+}
+
+.owner-shell input,
+.owner-shell textarea,
+.owner-shell select {
+  border-radius: 10px !important;
+  border-color: rgba(0,0,0,0.12) !important;
+}
+
+.owner-shell input:focus,
+.owner-shell textarea:focus,
+.owner-shell select:focus {
+  border-color: var(--owner-gold) !important;
+  box-shadow: 0 0 0 4px rgba(180,135,61,0.14) !important;
+}
+
+.owner-shell table img,
+.owner-shell .review-thumb {
+  border-radius: 8px !important;
+}
+
+.owner-shell footer {
+  background: #fff !important;
+  color: var(--owner-muted) !important;
+}
+
+.owner-shell footer > div {
+  border-top-color: var(--owner-line) !important;
+}
+
+.owner-shell footer p:first-child {
+  color: var(--owner-ink) !important;
+}
+
+.owner-shell .overflow-x-auto {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+}
+
+@media (max-width: 768px) {
+  .owner-dashboard,
+  .owner-shell main > div.max-w-7xl,
+  .owner-shell main > div.max-w-5xl {
+    padding-left: 14px !important;
+    padding-right: 14px !important;
+  }
+
+  .owner-topbar > div {
+    padding-left: 14px !important;
+    padding-right: 14px !important;
+  }
+}

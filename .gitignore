@@ -1,0 +1,13 @@
+node_modules/
+.env
+*.log
+
+# Backup files created by Codex
+*.codexbak_*
+
+# Codex utility/migration scripts
+codex_*.php
+public/codex_*.php
+
+# User-uploaded files
+public/uploads/

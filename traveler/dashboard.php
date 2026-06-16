@@ -110,6 +110,7 @@ $logoUrl    = base_url('assets/images/logo-cropped-transparent.png');
   @media (max-width: 768px) { .dash-metric { border-left:0; padding-left:0; border-top:1px solid rgba(255,255,255,.14); padding-top:16px; } .dash-metric:first-child { border-top:0; padding-top:0; } .trip-img { width:100%; height:170px; } }
 </style>
 <link rel="stylesheet" href="<?= e(base_url('assets/css/traveler.css')) ?>?v=estate-traveler">
+<link rel="stylesheet" href="<?= e(base_url('assets/css/pill-nav.css')) ?>">
 </head>
 <body class="min-h-screen">
 <header class="traveler-nav sticky top-0 z-40">
@@ -117,11 +118,12 @@ $logoUrl    = base_url('assets/images/logo-cropped-transparent.png');
     <a href="<?= e($homeUrl) ?>" class="inline-flex items-center">
       <img src="<?= e($logoUrl) ?>" alt="Safari Tanzania" class="traveler-logo">
     </a>
-    <nav class="hidden md:flex items-center gap-7 text-sm font-medium text-white/72">
-      <a href="<?= e($listUrl) ?>" class="hover:text-white transition">Explore</a>
-      <a href="<?= e($bookingUrl) ?>" class="hover:text-white transition">My Bookings</a>
-      <a href="<?= e($logoutUrl) ?>" class="hover:text-white transition">Logout</a>
-    </nav>
+    <ul class="pill-nav hidden md:flex">
+      <li class="pill-nav__cursor" aria-hidden="true"></li>
+      <li class="pill-nav__item"><a href="<?= e($listUrl) ?>" class="pill-nav__link">Explore</a></li>
+      <li class="pill-nav__item"><a href="<?= e($bookingUrl) ?>" class="pill-nav__link">My Bookings</a></li>
+      <li class="pill-nav__item"><a href="<?= e($logoutUrl) ?>" class="pill-nav__link">Logout</a></li>
+    </ul>
   </div>
 </header>
 
@@ -152,7 +154,7 @@ $logoUrl    = base_url('assets/images/logo-cropped-transparent.png');
             <p class="mt-1 text-sm text-white/58">Total bookings</p>
           </div>
           <div class="dash-metric">
-            <p class="text-4xl font-bold">$<?= number_format($totalSpent, 0) ?></p>
+            <p class="text-4xl font-bold">Tsh <?= number_format($totalSpent, 0) ?></p>
             <p class="mt-1 text-sm text-white/58">Total spent</p>
           </div>
         </div>
@@ -186,7 +188,7 @@ $logoUrl    = base_url('assets/images/logo-cropped-transparent.png');
               <span class="service-tag"><span class="material-symbols-outlined" style="font-size:17px;">room_service</span><?= e($s['location']) ?></span>
               <h3 class="text-lg font-bold text-slate-900 mt-2"><?= e($s['name']) ?></h3>
               <p class="text-sm text-slate-500 mt-1"><?= e($s['description'] ?: $s['acc_name']) ?></p>
-              <div class="discover-price"><?= $s['price'] !== null ? '$' . e(number_format((float)$s['price'], 2)) : 'Ask host' ?></div>
+              <div class="discover-price"><?= $s['price'] !== null ? 'Tsh ' . e(number_format((float)$s['price'], 2)) : 'Ask host' ?></div>
             </div>
           </a>
         <?php endforeach; ?>
@@ -211,7 +213,7 @@ $logoUrl    = base_url('assets/images/logo-cropped-transparent.png');
               <h3 class="text-lg font-bold text-slate-900"><?= e($a['name']) ?></h3>
               <p class="discover-meta"><?= e($a['location']) ?> · <?= e(number_format((float)$a['rating'], 1)) ?> rating</p>
               <div class="discover-price">
-                <?= $a['from_price'] !== null ? 'From $' . e(number_format((float)$a['from_price'], 0)) . ' / night' : 'Price on request' ?>
+                <?= $a['from_price'] !== null ? 'From Tsh ' . e(number_format((float)$a['from_price'], 0)) . ' / night' : 'Price on request' ?>
               </div>
             </div>
           </a>
@@ -263,7 +265,7 @@ $logoUrl    = base_url('assets/images/logo-cropped-transparent.png');
                 </p>
               </div>
               <div class="md:text-right">
-                <p class="text-xl font-bold text-slate-900">$<?= number_format((float)$b['total_price'], 0) ?></p>
+                <p class="text-xl font-bold text-slate-900">Tsh <?= number_format((float)$b['total_price'], 0) ?></p>
                 <p class="text-xs text-slate-500 mt-1"><?= e($b['payment_status']) ?> payment</p>
               </div>
             </article>
@@ -291,5 +293,6 @@ $logoUrl    = base_url('assets/images/logo-cropped-transparent.png');
     <p>&copy; <?= date('Y') ?> Safari Tanzania. Preserving the Wild.</p>
   </div>
 </footer>
+<script src="<?= e(base_url('assets/js/pill-nav.js')) ?>" defer></script>
 </body>
 </html>

@@ -128,8 +128,8 @@ if (!$galleryImages) $galleryImages = [$heroImg];
 /* DETAILS PREMIUM OVERRIDES */
 .details-page { background: var(--white) !important; color: var(--navy) !important; font-family: 'Inter', sans-serif !important; }
 .details-page header.bg-white { background: rgba(6,14,42,.94) !important; border-color: rgba(30,198,255,.12) !important; backdrop-filter: blur(20px) saturate(180%); -webkit-backdrop-filter: blur(20px) saturate(180%); box-shadow: 0 4px 30px rgba(0,0,0,.25) !important; }
-.details-page header a, .details-page header nav a { color: rgba(255,255,255,.78) !important; }
-.details-page header a:hover, .details-page header nav a:hover { color: #fff !important; }
+.details-page header a:not(.pill-nav__link), .details-page header nav a:not(.pill-nav__link) { color: rgba(255,255,255,.78) !important; }
+.details-page header a:hover:not(.pill-nav__link), .details-page header nav a:hover:not(.pill-nav__link) { color: #fff !important; }
 .details-page .text-amber-600, .details-page .text-amber-500 { color: var(--cyan) !important; }
 .details-page .bg-amber-500, .details-page a.bg-amber-500, .details-page button.bg-amber-500 { background: var(--gradient-btn) !important; color:#fff !important; box-shadow: var(--shadow-blue) !important; }
 .details-hero-section { max-width: none !important; padding: 92px 24px 34px !important; background: linear-gradient(180deg, var(--dark), #0B1E5B) !important; }
@@ -312,6 +312,7 @@ if (!$galleryImages) $galleryImages = [$heroImg];
 }
 </style>
 <link rel="stylesheet" href="<?= e(base_url('assets/css/premium.css')) ?>?v=estate-connected">
+<link rel="stylesheet" href="<?= e(base_url('assets/css/pill-nav.css')) ?>">
 </head>
 <body class="bg-stone-50 text-stone-900 details-page">
 
@@ -321,16 +322,20 @@ if (!$galleryImages) $galleryImages = [$heroImg];
     <a href="<?= $homeUrl ?>" class="flex items-center gap-2 text-stone-900">
       <img src="<?= $logoUrl ?>" alt="Safari Tanzania" class="brand-logo-img">
     </a>
-    <nav class="hidden md:flex items-center gap-8 text-sm font-medium text-stone-700">
-      <a href="<?= $listingUrl ?>" class="hover:text-amber-600">Explore</a>
-      <a href="<?= $listingUrl ?>" class="hover:text-amber-600">Destinations</a>
-      <?php if ($user): ?>
-        <a href="<?= $dashUrl ?>" class="bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-full font-semibold">Dashboard</a>
-        <a href="<?= $logoutUrl ?>" class="hover:text-amber-600">Logout</a>
-      <?php else: ?>
-        <a href="<?= $loginUrl ?>" class="bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-full font-semibold">Login</a>
+    <div class="hidden md:flex items-center gap-4">
+      <ul class="pill-nav">
+        <li class="pill-nav__cursor" aria-hidden="true"></li>
+        <li class="pill-nav__item"><a href="<?= $listingUrl ?>" class="pill-nav__link">Explore</a></li>
+        <li class="pill-nav__item"><a href="<?= $listingUrl ?>" class="pill-nav__link">Destinations</a></li>
+        <?php if ($user): ?>
+          <li class="pill-nav__item"><a href="<?= $dashUrl ?>" class="pill-nav__link">Dashboard</a></li>
+          <li class="pill-nav__item"><a href="<?= $logoutUrl ?>" class="pill-nav__link">Logout</a></li>
+        <?php endif; ?>
+      </ul>
+      <?php if (!$user): ?>
+        <a href="<?= $loginUrl ?>" class="bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-full font-semibold text-sm">Login</a>
       <?php endif; ?>
-    </nav>
+    </div>
   </div>
 </header>
 
@@ -417,7 +422,7 @@ if (!$galleryImages) $galleryImages = [$heroImg];
               <div class="flex-1">
                 <div class="flex flex-wrap items-baseline gap-3">
                   <h3 class="text-xl font-bold"><?= e($r['room_type']) ?></h3>
-                  <p class="text-amber-600 font-extrabold">$<?= e(number_format((float)$r['price'], 0)) ?><span class="text-stone-500 font-medium text-sm">/night</span></p>
+                  <p class="text-amber-600 font-extrabold">Tsh <?= e(number_format((float)$r['price'], 0)) ?><span class="text-stone-500 font-medium text-sm">/night</span></p>
                 </div>
                 <div class="flex flex-wrap gap-4 mt-2 text-sm text-stone-600">
                   <span class="inline-flex items-center gap-1">
@@ -478,7 +483,7 @@ if (!$galleryImages) $galleryImages = [$heroImg];
               <div class="flex items-start justify-between gap-3 mt-4">
                 <h3 class="text-lg font-extrabold text-stone-900"><?= e($s['name']) ?></h3>
                 <span class="service-price-pill">
-                  <?= $s['price'] !== null ? '$' . e(number_format((float)$s['price'], 2)) : 'Ask host' ?>
+                  <?= $s['price'] !== null ? 'Tsh ' . e(number_format((float)$s['price'], 2)) : 'Ask host' ?>
                 </span>
               </div>
               <?php if (!empty($s['description'])): ?>
@@ -646,6 +651,7 @@ if (!$galleryImages) $galleryImages = [$heroImg];
 })();
 </script>
 <?php endif; ?>
+<script src="<?= e(base_url('assets/js/pill-nav.js')) ?>" defer></script>
 </body>
 </html>
 

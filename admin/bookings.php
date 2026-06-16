@@ -54,7 +54,7 @@ include __DIR__ . '/../includes/admin_header.php';
             ['label' => 'Total Bookings', 'value' => $stats['total'],     'icon' => 'event_note',   'color' => 'text-sky-600',     'bg' => 'bg-sky-100'],
             ['label' => 'Confirmed',      'value' => $stats['confirmed'], 'icon' => 'check_circle', 'color' => 'text-emerald-600', 'bg' => 'bg-emerald-100'],
             ['label' => 'Completed',      'value' => $stats['completed'], 'icon' => 'task_alt',     'color' => 'text-blue-600',    'bg' => 'bg-blue-100'],
-            ['label' => 'Platform Revenue', 'value' => '$' . number_format((float)$stats['revenue'], 0), 'icon' => 'payments', 'color' => 'text-violet-600', 'bg' => 'bg-violet-100'],
+            ['label' => 'Platform Revenue', 'value' => 'Tsh ' . number_format((float)$stats['revenue'], 0), 'icon' => 'payments', 'color' => 'text-violet-600', 'bg' => 'bg-violet-100'],
         ];
         foreach ($cards as $c):
         ?>
@@ -121,7 +121,7 @@ include __DIR__ . '/../includes/admin_header.php';
                             <td class="px-6 py-4 text-slate-600"><?= e($b['check_out']) ?></td>
                             <td class="px-6 py-4 text-slate-700"><?= (int)$b['guests'] ?></td>
                             <td class="px-6 py-4 font-bold text-slate-900">
-                                $<?= number_format((float)$b['total_price'], 0) ?>
+                                Tsh <?= number_format((float)$b['total_price'], 0) ?>
                             </td>
                             <td class="px-6 py-4">
                                 <?php $bc = match($b['booking_status']) {

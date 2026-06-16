@@ -47,6 +47,13 @@ function checkAnyRole(array $roles): void {
     }
 }
 
+function worker_accommodation_ids(int $workerId): array {
+    global $pdo;
+    $stmt = $pdo->prepare('SELECT accommodation_id FROM accommodation_workers WHERE worker_id = ?');
+    $stmt->execute([$workerId]);
+    return array_map('intval', $stmt->fetchAll(PDO::FETCH_COLUMN));
+}
+
 function csrf_token(): string {
     if (empty($_SESSION['_csrf'])) {
         $_SESSION['_csrf'] = bin2hex(random_bytes(32));

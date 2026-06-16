@@ -35,7 +35,7 @@ if ($check_in && $check_out) {
     $previewOut = DateTime::createFromFormat('Y-m-d', $check_out);
     if ($previewIn && $previewOut && $previewOut > $previewIn) {
         $estimatedNights = (int)$previewIn->diff($previewOut)->days;
-        $estimatedTotal = $estimatedNights * (float)$room['price'];
+        $estimatedTotal = $estimatedNights * (float)$room['price'] * max(1, $guests);
     }
 }
 
@@ -68,7 +68,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $errors[] = 'Sorry, this room is not available for the selected dates.';
         } else {
             $nights = (int)$d_in->diff($d_out)->days;
-            $total  = $nights * (float)$room['price'];
+            $total  = $nights * (float)$room['price'] * $guests;
 
             $ins = $pdo->prepare(
                 'INSERT INTO bookings
@@ -120,17 +120,19 @@ $backUrl = base_url('public/accommodation_details.php?id=' . (int)$room['acc_id'
   @media (max-width:900px){ .summary-panel{border-left:0;border-top:1px solid var(--line);padding-left:0;padding-top:28px;} .photo-strip{height:280px;overflow-x:auto;scroll-snap-type:x mandatory;} .photo-panel,.photo-panel:first-child{flex:0 0 78%;scroll-snap-align:start;} }
 </style>
 <link rel="stylesheet" href="<?= e(base_url('assets/css/traveler.css')) ?>?v=estate-traveler">
+<link rel="stylesheet" href="<?= e(base_url('assets/css/pill-nav.css')) ?>">
 </head>
 <body class="min-h-screen">
 <header class="traveler-nav sticky top-0 z-40">
   <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
     <a href="<?= e($homeUrl) ?>"><img src="<?= e($logoUrl) ?>" alt="Safari Tanzania" class="traveler-logo"></a>
-    <nav class="hidden md:flex items-center gap-7 text-sm font-medium text-white/72">
-      <a href="<?= e($listUrl) ?>" class="hover:text-white transition">Explore</a>
-      <a href="<?= e($dashboardUrl) ?>" class="hover:text-white transition">Dashboard</a>
-      <a href="<?= e($bookingsUrl) ?>" class="hover:text-white transition">My Bookings</a>
-      <a href="<?= e($logoutUrl) ?>" class="hover:text-white transition">Logout</a>
-    </nav>
+    <ul class="pill-nav hidden md:flex">
+      <li class="pill-nav__cursor" aria-hidden="true"></li>
+      <li class="pill-nav__item"><a href="<?= e($listUrl) ?>" class="pill-nav__link">Explore</a></li>
+      <li class="pill-nav__item"><a href="<?= e($dashboardUrl) ?>" class="pill-nav__link">Dashboard</a></li>
+      <li class="pill-nav__item"><a href="<?= e($bookingsUrl) ?>" class="pill-nav__link">My Bookings</a></li>
+      <li class="pill-nav__item"><a href="<?= e($logoutUrl) ?>" class="pill-nav__link">Logout</a></li>
+    </ul>
   </div>
 </header>
 
@@ -148,7 +150,7 @@ $backUrl = base_url('public/accommodation_details.php?id=' . (int)$room['acc_id'
           <div class="mt-7 flex flex-wrap gap-4 text-sm text-white/76">
             <span class="inline-flex items-center gap-2"><span class="material-symbols-outlined text-cyan-200" style="font-size:18px;">group</span> Up to <?= (int)$room['capacity'] ?> guests</span>
             <span class="inline-flex items-center gap-2"><span class="material-symbols-outlined text-cyan-200" style="font-size:18px;">bed</span> <?= (int)$room['total_rooms'] ?> available</span>
-            <span class="inline-flex items-center gap-2"><span class="material-symbols-outlined text-cyan-200" style="font-size:18px;">payments</span> $<?= number_format((float)$room['price'], 0) ?>/night</span>
+            <span class="inline-flex items-center gap-2"><span class="material-symbols-outlined text-cyan-200" style="font-size:18px;">payments</span> Tsh <?= number_format((float)$room['price'], 0) ?>/night</span>
           </div>
         </div>
         <div class="photo-strip" aria-label="Room photos">
@@ -205,9 +207,10 @@ $backUrl = base_url('public/accommodation_details.php?id=' . (int)$room['acc_id'
           <p class="text-sm text-slate-600 leading-relaxed"><?= e($room['room_amenities']) ?></p>
         <?php endif; ?>
         <div class="border-y border-slate-200 py-5 space-y-3 text-sm">
-          <div class="flex justify-between gap-4"><span class="text-slate-500">Nightly rate</span><strong>$<?= number_format((float)$room['price'], 2) ?></strong></div>
+          <div class="flex justify-between gap-4"><span class="text-slate-500">Rate per room/night</span><strong>Tsh <?= number_format((float)$room['price'], 2) ?></strong></div>
+          <div class="flex justify-between gap-4"><span class="text-slate-500">Guests</span><strong id="guestsText"><?= max(1, $guests) ?></strong></div>
           <div class="flex justify-between gap-4"><span class="text-slate-500">Nights</span><strong id="nightsText"><?= $estimatedNights ?: '-' ?></strong></div>
-          <div class="flex justify-between gap-4"><span class="text-slate-500">Estimated total</span><strong class="text-xl" id="totalText"><?= $estimatedTotal > 0 ? '$' . number_format($estimatedTotal, 2) : '-' ?></strong></div>
+          <div class="flex justify-between gap-4 border-t border-slate-100 pt-3"><span class="text-slate-500">Estimated total</span><strong class="text-xl text-sky-700" id="totalText"><?= $estimatedTotal > 0 ? 'Tsh ' . number_format($estimatedTotal, 2) : '-' ?></strong></div>
         </div>
         <p class="text-xs text-slate-500 leading-relaxed">Payment is completed after confirmation. Your booking remains pending payment until checkout is recorded.</p>
       </div>
@@ -223,27 +226,36 @@ $backUrl = base_url('public/accommodation_details.php?id=' . (int)$room['acc_id'
 </footer>
 <script>
 (function(){
-  const price = <?= json_encode((float)$room['price']) ?>;
-  const checkIn = document.getElementById('checkIn');
-  const checkOut = document.getElementById('checkOut');
+  const price      = <?= json_encode((float)$room['price']) ?>;
+  const checkIn    = document.getElementById('checkIn');
+  const checkOut   = document.getElementById('checkOut');
+  const guestsInp  = document.querySelector('[name="guests"]');
   const nightsText = document.getElementById('nightsText');
-  const totalText = document.getElementById('totalText');
-  const today = new Date().toISOString().slice(0,10);
-  if (checkIn) checkIn.min = today;
+  const guestsText = document.getElementById('guestsText');
+  const totalText  = document.getElementById('totalText');
+  const today      = new Date().toISOString().slice(0,10);
+  if (checkIn)  checkIn.min  = today;
   if (checkOut) checkOut.min = today;
+
   function updateEstimate(){
-    if (!checkIn.value || !checkOut.value) { nightsText.textContent='-'; totalText.textContent='-'; return; }
-    const start = new Date(checkIn.value + 'T00:00:00');
-    const end = new Date(checkOut.value + 'T00:00:00');
+    const g = Math.max(1, parseInt(guestsInp?.value || 1) || 1);
+    if (guestsText) guestsText.textContent = g;
+    if (!checkIn?.value || !checkOut?.value) { nightsText.textContent='-'; totalText.textContent='-'; return; }
+    const start  = new Date(checkIn.value  + 'T00:00:00');
+    const end    = new Date(checkOut.value + 'T00:00:00');
     const nights = Math.round((end - start) / 86400000);
     if (nights <= 0) { nightsText.textContent='-'; totalText.textContent='-'; return; }
     nightsText.textContent = nights;
-    totalText.textContent = '$' + (nights * price).toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2});
+    const total = nights * price * g;
+    totalText.textContent = 'Tsh ' + total.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2});
   }
-  checkIn && checkIn.addEventListener('change', () => { if (checkOut) checkOut.min = checkIn.value || today; updateEstimate(); });
-  checkOut && checkOut.addEventListener('change', updateEstimate);
+
+  checkIn   && checkIn.addEventListener('change',  () => { if (checkOut) checkOut.min = checkIn.value || today; updateEstimate(); });
+  checkOut  && checkOut.addEventListener('change',  updateEstimate);
+  guestsInp && guestsInp.addEventListener('input',  updateEstimate);
   updateEstimate();
 })();
 </script>
+<script src="<?= e(base_url('assets/js/pill-nav.js')) ?>" defer></script>
 </body>
 </html>

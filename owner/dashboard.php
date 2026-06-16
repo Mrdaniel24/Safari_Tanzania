@@ -199,7 +199,7 @@ include __DIR__ . '/../includes/header.php';
             </div>
             <div class="owner-stat">
                 <div class="owner-stat-top"><div class="owner-stat-icon amber"><span class="material-symbols-outlined">payments</span></div><small>Revenue</small></div>
-                <strong>$<?= number_format($totalRevenue, 0) ?></strong><small><?= $pendingPayments ?> pending payment<?= $pendingPayments === 1 ? '' : 's' ?></small>
+                <strong>Tsh <?= number_format($totalRevenue, 0) ?></strong><small><?= $pendingPayments ?> pending payment<?= $pendingPayments === 1 ? '' : 's' ?></small>
             </div>
         </section>
 
@@ -225,7 +225,7 @@ include __DIR__ . '/../includes/header.php';
                                 <div class="owner-booking-meta"><?= e($b['check_in']) ?> to <?= e($b['check_out']) ?></div>
                             </div>
                             <div class="text-right">
-                                <div class="font-bold text-slate-900">$<?= number_format((float)$b['total_price'], 0) ?></div>
+                                <div class="font-bold text-slate-900">Tsh <?= number_format((float)$b['total_price'], 0) ?></div>
                                 <span class="owner-pill <?= e($statusClass) ?> mt-2"><?= e($b['booking_status']) ?></span>
                             </div>
                         </div>

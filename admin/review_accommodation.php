@@ -192,7 +192,7 @@ include __DIR__ . '/../includes/admin_header.php';
                                 <div class="flex flex-wrap justify-between gap-3">
                                     <div>
                                         <h4 class="font-bold text-slate-900"><?= e($room['room_type']) ?></h4>
-                                        <p class="text-sm text-slate-500"><?= (int)$room['capacity'] ?> guests · <?= (int)$room['total_rooms'] ?> rooms · $<?= number_format((float)$room['price'], 2) ?></p>
+                                        <p class="text-sm text-slate-500"><?= (int)$room['capacity'] ?> guests · <?= (int)$room['total_rooms'] ?> rooms · Tsh <?= number_format((float)$room['price'], 2) ?></p>
                                     </div>
                                 </div>
                                 <?php if (!empty($room['room_amenities'])): ?><p class="text-sm text-slate-600 mt-2"><?= e($room['room_amenities']) ?></p><?php endif; ?>
@@ -219,7 +219,7 @@ include __DIR__ . '/../includes/admin_header.php';
                                     <h4 class="font-bold text-slate-900"><?= e($svc['name']) ?></h4>
                                     <span class="text-xs font-semibold px-2.5 py-1 rounded-full <?= (int)$svc['is_visible'] ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-700' ?>"><?= (int)$svc['is_visible'] ? 'visible' : 'hidden' ?></span>
                                 </div>
-                                <p class="text-sm text-slate-500 mt-1"><?= $svc['price'] !== null ? '$' . number_format((float)$svc['price'], 2) : 'Price optional' ?></p>
+                                <p class="text-sm text-slate-500 mt-1"><?= $svc['price'] !== null ? 'Tsh ' . number_format((float)$svc['price'], 2) : 'Price optional' ?></p>
                                 <?php if (!empty($svc['description'])): ?><p class="text-sm text-slate-600 mt-2"><?= e($svc['description']) ?></p><?php endif; ?>
                                 <?php if ($simgs): ?>
                                     <div class="review-thumb-grid mt-3">

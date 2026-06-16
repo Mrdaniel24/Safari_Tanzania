@@ -77,12 +77,12 @@ include __DIR__ . '/../includes/header.php';
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                     <label class="block text-sm font-semibold text-zinc-700 mb-1">
-                        Price / Night (USD) <span class="text-red-500">*</span>
+                        Price / Night (Tsh) <span class="text-red-500">*</span>
                     </label>
                     <div class="relative">
-                        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 font-bold">$</span>
+                        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 font-bold">Tsh</span>
                         <input type="number" name="price" min="1" step="0.01" required value="<?= e($room['price']) ?>"
-                               class="w-full pl-7 rounded-lg border-zinc-300 focus:border-emerald-600 focus:ring-emerald-600 text-sm">
+                               class="w-full pl-12 rounded-lg border-zinc-300 focus:border-emerald-600 focus:ring-emerald-600 text-sm">
                     </div>
                 </div>
                 <div>

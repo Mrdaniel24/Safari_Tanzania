@@ -1470,17 +1470,17 @@ body.home-page {
   filter: none !important;
 }
 
-.listing-page header a,
-.listing-page header nav a,
-.details-page header a,
-.details-page header nav a,
+.listing-page header a:not(.pill-nav__link),
+.listing-page header nav a:not(.pill-nav__link),
+.details-page header a:not(.pill-nav__link),
+.details-page header nav a:not(.pill-nav__link),
 .auth-page .nav-link {
   color: #202020 !important;
   font-weight: 700 !important;
 }
 
-.listing-page header a:hover,
-.details-page header a:hover,
+.listing-page header a:hover:not(.pill-nav__link),
+.details-page header a:hover:not(.pill-nav__link),
 .auth-page .nav-link:hover {
   color: #b4873d !important;
 }

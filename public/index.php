@@ -32,6 +32,7 @@ $logoUrl     = e(base_url('assets/images/logo-cropped-transparent.png'));
 <title>Safari Tanzania â€” Premium Luxury Safari Experiences</title>
 <meta name="description" content="Discover Tanzania's finest luxury safari experiences. Book premium lodges, wildlife tours, and exclusive adventures across the Serengeti, Zanzibar, and beyond.">
 <link rel="stylesheet" href="<?= e(base_url('assets/css/premium.css')) ?>">
+<link rel="stylesheet" href="<?= e(base_url('assets/css/pill-nav.css')) ?>">
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
 </head>
 <body class="home-page">
@@ -42,13 +43,14 @@ $logoUrl     = e(base_url('assets/images/logo-cropped-transparent.png'));
     <a href="<?= e(base_url('public/index.php')) ?>" class="nav-logo">
       <img src="<?= $logoUrl ?>" alt="Safari Tanzania" style="height:64px;">
     </a>
-    <ul class="nav-links" id="navLinks">
-      <li><a href="<?= e(base_url('public/index.php')) ?>" class="nav-link">Home</a></li>
-      <li><a href="<?= $listingUrl ?>" class="nav-link">Explore</a></li>
-      <li><a href="#destinations" class="nav-link">Destinations</a></li>
-      <li><a href="#packages" class="nav-link">Packages</a></li>
-      <li><a href="#about" class="nav-link">About</a></li>
-      <li><a href="#contact" class="nav-link">Contact</a></li>
+    <ul class="pill-nav" id="navLinks">
+      <li class="pill-nav__cursor" aria-hidden="true"></li>
+      <li class="pill-nav__item"><a href="<?= e(base_url('public/index.php')) ?>" class="pill-nav__link">Home</a></li>
+      <li class="pill-nav__item"><a href="<?= $listingUrl ?>" class="pill-nav__link">Explore</a></li>
+      <li class="pill-nav__item"><a href="#destinations" class="pill-nav__link">Destinations</a></li>
+      <li class="pill-nav__item"><a href="#packages" class="pill-nav__link">Packages</a></li>
+      <li class="pill-nav__item"><a href="#about" class="pill-nav__link">About</a></li>
+      <li class="pill-nav__item"><a href="#contact" class="pill-nav__link">Contact</a></li>
     </ul>
     <div class="nav-actions">
       <?php if ($user): ?>
@@ -133,7 +135,7 @@ $logoUrl     = e(base_url('assets/images/logo-cropped-transparent.png'));
         <span class="estate-save"><span class="material-symbols-outlined">favorite</span></span>
         <div class="estate-price-panel">
           <div>
-            <strong>$<?= e(number_format((float)$priceValue, 0)) ?></strong>
+            <strong>Tsh <?= e(number_format((float)$priceValue, 0)) ?></strong>
             <span><?= e($place) ?></span>
           </div>
           <span class="estate-arrow"><span class="material-symbols-outlined">arrow_forward</span></span>
@@ -286,11 +288,13 @@ if (toggle) {
     links.style.top = '100%';
     links.style.left = '0';
     links.style.right = '0';
-    links.style.background = 'rgba(6,14,42,0.98)';
+    links.style.background = 'rgba(255,255,255,0.98)';
     links.style.backdropFilter = 'blur(20px)';
     links.style.padding = '24px';
     links.style.gap = '16px';
-    links.style.borderTop = '1px solid rgba(30,198,255,0.1)';
+    links.style.borderTop = '1px solid rgba(11,30,91,0.08)';
+    links.style.borderRadius = '0 0 16px 16px';
+    links.style.boxShadow = '0 16px 32px rgba(11,30,91,0.12)';
     toggle.querySelector('.material-symbols-outlined').textContent = open ? 'menu' : 'close';
   });
 }
@@ -299,6 +303,7 @@ if (toggle) {
 window.process = { env: { NODE_ENV: 'production' } };
 </script>
 <script src="<?= e(base_url('assets/js/animations.js')) ?>"></script>
+<script src="<?= e(base_url('assets/js/pill-nav.js')) ?>" defer></script>
 </body>
 </html>
 

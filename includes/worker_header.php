@@ -1,22 +1,20 @@
-﻿<?php
+<?php
 $ap       = $activePage ?? 'dashboard';
-$userName = $_SESSION['full_name'] ?? 'User';
+$userName = $_SESSION['full_name'] ?? 'Worker';
 $logoUrl  = base_url('assets/images/logo-cropped-transparent.png');
-$avatarUrl = 'https://ui-avatars.com/api/?name=' . urlencode($userName) . '&background=0B1E5B&color=fff';
+$avatarUrl = 'https://ui-avatars.com/api/?name=' . urlencode($userName) . '&background=0F7BD9&color=fff';
 $flashes  = flash_pull();
-$cls = fn(string $p) => $ap === $p
-    ? 'owner-nav-link is-active'
-    : 'owner-nav-link';
+$cls = fn(string $p) => $ap === $p ? 'owner-nav-link is-active' : 'owner-nav-link';
 ?>
 <!DOCTYPE html>
 <html class="light" lang="en">
 <head>
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-    <title><?= e($pageTitle ?? 'Safari Tanzania') ?> - Safari Tanzania</title>
+    <title><?= e($pageTitle ?? 'Safari Tanzania') ?> - Worker Portal</title>
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
-    <link rel="stylesheet" href="<?= e(base_url('assets/css/owner.css')) ?>?v=estate-owner">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <link rel="stylesheet" href="<?= e(base_url('assets/css/owner.css')) ?>?v=estate-worker">
     <script id="tailwind-config">
         tailwind.config = {
             theme: {
@@ -89,7 +87,7 @@ $cls = fn(string $p) => $ap === $p
 <div class="flex min-h-screen owner-page">
     <aside class="owner-sidebar hidden md:flex flex-col h-screen w-72 fixed left-0 top-0 z-40 overflow-y-auto custom-scrollbar text-white px-4 py-5">
         <div class="owner-logo px-2 pb-5">
-            <a href="<?= e(base_url('owner/dashboard.php')) ?>" class="inline-flex items-center">
+            <a href="<?= e(base_url('worker/dashboard.php')) ?>" class="inline-flex items-center">
                 <img src="<?= e($logoUrl) ?>" alt="Safari Tanzania">
             </a>
         </div>
@@ -99,26 +97,20 @@ $cls = fn(string $p) => $ap === $p
                 <img src="<?= e($avatarUrl) ?>" alt="Avatar" class="w-12 h-12 rounded-2xl border border-white/15 shadow-lg">
                 <div class="min-w-0">
                     <div class="text-sm font-bold text-white truncate"><?= e($userName) ?></div>
-                    <div class="text-xs text-cyan-100/75">Property partner</div>
+                    <div class="text-xs text-cyan-100/75">Staff member</div>
                 </div>
             </div>
         </div>
 
         <nav class="flex-1 space-y-1">
-            <a href="<?= e(base_url('owner/dashboard.php')) ?>" class="<?= $cls('dashboard') ?>">
+            <a href="<?= e(base_url('worker/dashboard.php')) ?>" class="<?= $cls('dashboard') ?>">
                 <span class="material-symbols-outlined">dashboard</span><span>Dashboard</span>
             </a>
-            <a href="<?= e(base_url('owner/properties.php')) ?>" class="<?= $cls('properties') ?>">
-                <span class="material-symbols-outlined">domain</span><span>My Properties</span>
-            </a>
-            <a href="<?= e(base_url('owner/bookings.php')) ?>" class="<?= $cls('bookings') ?>">
+            <a href="<?= e(base_url('worker/bookings.php')) ?>" class="<?= $cls('bookings') ?>">
                 <span class="material-symbols-outlined">calendar_month</span><span>Bookings</span>
             </a>
-            <a href="<?= e(base_url('owner/workers.php')) ?>" class="<?= $cls('workers') ?>">
-                <span class="material-symbols-outlined">badge</span><span>Workers</span>
-            </a>
-            <a href="<?= e(base_url('owner/profile_verification.php')) ?>" class="<?= $cls('verification') ?>">
-                <span class="material-symbols-outlined">verified_user</span><span>Verification</span>
+            <a href="<?= e(base_url('worker/payments.php')) ?>" class="<?= $cls('payments') ?>">
+                <span class="material-symbols-outlined">payments</span><span>Payments</span>
             </a>
         </nav>
 
@@ -136,13 +128,13 @@ $cls = fn(string $p) => $ap === $p
         <header class="owner-topbar sticky top-0 z-30 border-b border-slate-200/70">
             <div class="flex justify-between items-center w-full px-5 md:px-8 py-4 max-w-7xl mx-auto">
                 <div>
-                    <p class="text-xs font-bold uppercase text-primary">Owner portal</p>
+                    <p class="text-xs font-bold uppercase text-primary">Worker portal</p>
                     <h1 class="text-xl md:text-2xl font-bold text-ink"><?= e($pageTitle ?? '') ?></h1>
                 </div>
-                <a href="<?= e(base_url('owner/add_property.php')) ?>" class="owner-action">
-                    <span class="material-symbols-outlined" style="font-size:19px;">add_home</span>
-                    <span>Add Property</span>
-                </a>
+                <div class="flex items-center gap-2 text-sm text-zinc-500">
+                    <span class="material-symbols-outlined text-primary" style="font-size:20px;">badge</span>
+                    <span class="font-semibold text-zinc-700"><?= e($userName) ?></span>
+                </div>
             </div>
         </header>
 

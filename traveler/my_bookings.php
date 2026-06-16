@@ -73,16 +73,18 @@ $logoUrl = base_url('assets/images/logo-cropped-transparent.png');
   @media (max-width:768px){ .metric{border-left:0;border-top:1px solid rgba(255,255,255,.14);padding-left:0;padding-top:16px;} .metric:first-child{border-top:0;padding-top:0;} .booking-img{width:100%;height:180px;} }
 </style>
 <link rel="stylesheet" href="<?= e(base_url('assets/css/traveler.css')) ?>?v=estate-traveler">
+<link rel="stylesheet" href="<?= e(base_url('assets/css/pill-nav.css')) ?>">
 </head>
 <body class="min-h-screen">
 <header class="traveler-nav sticky top-0 z-40">
   <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
     <a href="<?= e($homeUrl) ?>"><img src="<?= e($logoUrl) ?>" alt="Safari Tanzania" class="traveler-logo"></a>
-    <nav class="hidden md:flex items-center gap-7 text-sm font-medium text-white/72">
-      <a href="<?= e($listUrl) ?>" class="hover:text-white transition">Explore</a>
-      <a href="<?= e($dashboardUrl) ?>" class="hover:text-white transition">Dashboard</a>
-      <a href="<?= e($logoutUrl) ?>" class="hover:text-white transition">Logout</a>
-    </nav>
+    <ul class="pill-nav hidden md:flex">
+      <li class="pill-nav__cursor" aria-hidden="true"></li>
+      <li class="pill-nav__item"><a href="<?= e($listUrl) ?>" class="pill-nav__link">Explore</a></li>
+      <li class="pill-nav__item"><a href="<?= e($dashboardUrl) ?>" class="pill-nav__link">Dashboard</a></li>
+      <li class="pill-nav__item"><a href="<?= e($logoutUrl) ?>" class="pill-nav__link">Logout</a></li>
+    </ul>
   </div>
 </header>
 
@@ -161,9 +163,14 @@ $logoUrl = base_url('assets/images/logo-cropped-transparent.png');
               </div>
             </div>
             <div class="lg:text-right space-y-3">
-              <p class="text-xl font-bold text-slate-900">$<?= number_format((float)$b['total_price'], 2) ?></p>
+              <p class="text-xl font-bold text-slate-900">Tsh <?= number_format((float)$b['total_price'], 2) ?></p>
               <div class="flex flex-wrap lg:justify-end gap-2">
                 <a href="<?= e(base_url('public/accommodation_details.php?id=' . (int)$b['acc_id'])) ?>" class="soft-action inline-flex items-center gap-1 px-4 py-2 rounded-full text-sm font-semibold">View</a>
+                <?php if ($b['payment_status'] === 'paid'): ?>
+                  <a href="<?= e(base_url('traveler/receipt.php?booking_id=' . (int)$b['id'])) ?>" class="inline-flex items-center gap-1 px-4 py-2 rounded-full text-sm font-semibold" style="background:#F0FDF4; color:#047857;">
+                    <span class="material-symbols-outlined" style="font-size:16px;">receipt_long</span>Receipt
+                  </a>
+                <?php endif; ?>
                 <?php if ($b['payment_status'] === 'pending' && $b['booking_status'] === 'confirmed'): ?>
                   <a href="<?= e(base_url('traveler/payment.php?booking_id=' . (int)$b['id'])) ?>" class="primary-action inline-flex items-center gap-1 px-4 py-2 rounded-full text-sm font-semibold">Pay</a>
                 <?php endif; ?>
@@ -190,5 +197,6 @@ $logoUrl = base_url('assets/images/logo-cropped-transparent.png');
     <p>&copy; <?= date('Y') ?> Safari Tanzania. Preserving the Wild.</p>
   </div>
 </footer>
+<script src="<?= e(base_url('assets/js/pill-nav.js')) ?>" defer></script>
 </body>
 </html>

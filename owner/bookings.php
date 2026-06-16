@@ -117,7 +117,7 @@ include __DIR__ . '/../includes/header.php';
                             <td class="px-6 py-4 text-zinc-600"><?= e($b['check_out']) ?></td>
                             <td class="px-6 py-4 text-zinc-600"><?= (int)$b['guests'] ?></td>
                             <td class="px-6 py-4 font-bold text-zinc-900">
-                                $<?= number_format((float)$b['total_price'], 0) ?>
+                                Tsh <?= number_format((float)$b['total_price'], 0) ?>
                             </td>
                             <td class="px-6 py-4">
                                 <?php $bc = match($b['booking_status']) {

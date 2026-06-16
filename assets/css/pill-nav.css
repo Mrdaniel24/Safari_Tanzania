@@ -1,0 +1,75 @@
+/* ============================================================
+   Safari Tanzania — Pill Navigation
+   Rounded pill nav with a sliding "cursor" highlight that
+   follows the hovered link (vanilla CSS transition + a small
+   JS helper — see assets/js/pill-nav.js).
+   ============================================================ */
+
+.pill-nav {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  list-style: none;
+  margin: 0;
+  padding: 5px;
+  border-radius: 999px;
+  background: rgba(11, 30, 91, 0.03);
+  border: 1px solid rgba(11, 30, 91, 0.08);
+}
+
+/* On the homepage the pill nav sits between the logo and the
+   call-to-action buttons, so let it grow and center its items. */
+.home-page .pill-nav {
+  flex: 1 1 auto;
+  justify-content: center;
+}
+
+.pill-nav__cursor {
+  position: absolute;
+  top: 5px;
+  bottom: 5px;
+  left: 0;
+  width: 0;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #b4873d 0%, #d9a441 100%);
+  box-shadow: 0 8px 20px rgba(180, 135, 61, 0.35);
+  opacity: 0;
+  z-index: 1;
+  pointer-events: none;
+  transition:
+    left 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+    width 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.2s ease;
+}
+
+.pill-nav__item {
+  position: relative;
+  z-index: 2;
+  list-style: none;
+}
+
+.pill-nav__link {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 18px;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  white-space: nowrap;
+  color: #2a2a2a !important;
+  transition: color 0.25s ease;
+}
+
+.pill-nav__link:hover,
+.pill-nav__link:focus-visible {
+  color: #fff !important;
+}
+
+@media (max-width: 768px) {
+  .pill-nav {
+    display: none;
+  }
+}

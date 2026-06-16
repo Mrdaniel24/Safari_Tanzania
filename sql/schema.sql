@@ -17,9 +17,11 @@ CREATE TABLE users (
     email       VARCHAR(150) NOT NULL UNIQUE,
     phone       VARCHAR(20)  NULL,
     password    VARCHAR(255) NOT NULL,
-    role        ENUM('traveler','owner','admin') NOT NULL DEFAULT 'traveler',
+    role        ENUM('traveler','owner','admin','worker') NOT NULL DEFAULT 'traveler',
+    owner_id    INT NULL,
     status      ENUM('active','suspended') NOT NULL DEFAULT 'active',
-    created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_user_owner FOREIGN KEY (owner_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
 -- ---------------------------------------------------------------------
@@ -251,5 +253,18 @@ CREATE TABLE service_images (
     sort_order    INT NOT NULL DEFAULT 0,
     created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_service_image_service FOREIGN KEY (service_id) REFERENCES accommodation_services(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- ---------------------------------------------------------------------
+-- 3.13 accommodation_workers (many-to-many: owner staff <-> properties)
+-- ---------------------------------------------------------------------
+CREATE TABLE accommodation_workers (
+    id               INT AUTO_INCREMENT PRIMARY KEY,
+    accommodation_id INT NOT NULL,
+    worker_id        INT NOT NULL,
+    created_at       TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uniq_acc_worker (accommodation_id, worker_id),
+    CONSTRAINT fk_aw_acc    FOREIGN KEY (accommodation_id) REFERENCES accommodations(id) ON DELETE CASCADE,
+    CONSTRAINT fk_aw_worker FOREIGN KEY (worker_id)        REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 

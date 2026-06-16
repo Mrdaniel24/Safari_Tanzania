@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: May 17, 2026 at 10:56 PM
+-- Generation Time: Jun 17, 2026 at 12:15 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -145,6 +145,27 @@ INSERT INTO `accommodation_services` (`id`, `accommodation_id`, `name`, `descrip
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `accommodation_workers`
+--
+
+CREATE TABLE `accommodation_workers` (
+  `id` int(11) NOT NULL,
+  `accommodation_id` int(11) NOT NULL,
+  `worker_id` int(11) NOT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `accommodation_workers`
+--
+
+INSERT INTO `accommodation_workers` (`id`, `accommodation_id`, `worker_id`, `created_at`) VALUES
+(1, 4, 7, '2026-06-15 23:43:21'),
+(2, 5, 9, '2026-06-16 09:58:18');
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `admin_logs`
 --
 
@@ -212,7 +233,10 @@ CREATE TABLE `bookings` (
 --
 
 INSERT INTO `bookings` (`id`, `traveler_id`, `room_id`, `check_in`, `check_out`, `guests`, `total_price`, `booking_status`, `payment_status`, `created_at`) VALUES
-(1, 6, 4, '2026-05-16', '2026-05-17', 2, 520.00, 'confirmed', 'pending', '2026-05-14 16:45:02');
+(1, 6, 4, '2026-05-16', '2026-05-17', 2, 520.00, 'confirmed', 'pending', '2026-05-14 16:45:02'),
+(2, 8, 5, '2026-06-16', '2026-06-18', 1, 240.00, 'confirmed', 'paid', '2026-06-16 00:12:25'),
+(3, 8, 10, '2026-06-16', '2026-06-19', 2, 390.00, 'confirmed', 'pending', '2026-06-16 05:08:57'),
+(4, 10, 10, '2026-06-16', '2026-06-18', 2, 520.00, 'confirmed', 'paid', '2026-06-16 10:06:07');
 
 -- --------------------------------------------------------
 
@@ -259,6 +283,14 @@ CREATE TABLE `payments` (
   `payment_status` enum('success','failed') NOT NULL DEFAULT 'success',
   `paid_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `payments`
+--
+
+INSERT INTO `payments` (`id`, `booking_id`, `amount`, `payment_method`, `transaction_reference`, `payment_status`, `paid_at`) VALUES
+(1, 2, 240.00, 'mobile_money', 'B200B69EE2F1', 'success', '2026-06-16 00:12:49'),
+(2, 4, 520.00, 'mobile_money', 'EA6EDEECC099', 'success', '2026-06-16 10:06:30');
 
 -- --------------------------------------------------------
 
@@ -352,7 +384,8 @@ CREATE TABLE `users` (
   `email` varchar(150) NOT NULL,
   `phone` varchar(20) DEFAULT NULL,
   `password` varchar(255) NOT NULL,
-  `role` enum('traveler','owner','admin') NOT NULL DEFAULT 'traveler',
+  `role` enum('traveler','owner','admin','worker') NOT NULL DEFAULT 'traveler',
+  `owner_id` int(11) DEFAULT NULL,
   `status` enum('active','suspended') NOT NULL DEFAULT 'active',
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -361,13 +394,17 @@ CREATE TABLE `users` (
 -- Dumping data for table `users`
 --
 
-INSERT INTO `users` (`id`, `full_name`, `email`, `phone`, `password`, `role`, `status`, `created_at`) VALUES
-(1, 'System Admin', 'Admin@gmail.com', '+255700000000', '$2y$10$hlixe6/NUMeUWhKoGinzRuGuP/PrdmxQGKlgrW26Z11v7k/niL15a', 'admin', 'active', '2026-04-24 15:00:10'),
-(2, 'Demo Owner', 'owner@safaritanzania.test', '+255711111111', '$2y$10$u7mOlRHtwm.sDKE1TVc5VuvVHrwWz69iP/VdfZaT9BoKiaAiyE7kW', 'owner', 'active', '2026-04-24 15:00:10'),
-(3, 'Demo Traveler', 'traveler@safaritanzania.test', '+255722222222', '$2y$10$u7mOlRHtwm.sDKE1TVc5VuvVHrwWz69iP/VdfZaT9BoKiaAiyE7kW', 'traveler', 'active', '2026-04-24 15:00:10'),
-(4, 'Owner Gate Test', 'owner-gate-20260511041619@example.test', '+255700111222', '$2y$10$WPF.wexomCpJWFmAJ3RNjebrNnvAog.M4jtWJ5bRFsQJSaBCccbnO', 'owner', 'active', '2026-05-11 01:16:19'),
-(5, 'Daniel Timoth', 'dtimoth24@gmail.com', '0615292503', '$2y$10$xp5GcSthv5QNPfv0YrpuIe14oqnFSgfZgdIm1blqK9XfEnpgW88ce', 'owner', 'active', '2026-05-11 01:16:48'),
-(6, 'Daniel Matope', 'dmatope24@gmail.com', '0615292503', '$2y$10$DF4Pzn5LeDMa2wj1IKDOduM7WEezY2tbYolDPPpdC9Kt1rAWmctRm', 'traveler', 'active', '2026-05-11 21:11:29');
+INSERT INTO `users` (`id`, `full_name`, `email`, `phone`, `password`, `role`, `owner_id`, `status`, `created_at`) VALUES
+(1, 'System Admin', 'Admin@gmail.com', '+255700000000', '$2y$10$hlixe6/NUMeUWhKoGinzRuGuP/PrdmxQGKlgrW26Z11v7k/niL15a', 'admin', NULL, 'active', '2026-04-24 15:00:10'),
+(2, 'Demo Owner', 'owner@safaritanzania.test', '+255711111111', '$2y$10$u7mOlRHtwm.sDKE1TVc5VuvVHrwWz69iP/VdfZaT9BoKiaAiyE7kW', 'owner', NULL, 'active', '2026-04-24 15:00:10'),
+(3, 'Demo Traveler', 'traveler@safaritanzania.test', '+255722222222', '$2y$10$u7mOlRHtwm.sDKE1TVc5VuvVHrwWz69iP/VdfZaT9BoKiaAiyE7kW', 'traveler', NULL, 'active', '2026-04-24 15:00:10'),
+(4, 'Owner Gate Test', 'owner-gate-20260511041619@example.test', '+255700111222', '$2y$10$WPF.wexomCpJWFmAJ3RNjebrNnvAog.M4jtWJ5bRFsQJSaBCccbnO', 'owner', NULL, 'active', '2026-05-11 01:16:19'),
+(5, 'Daniel Timoth', 'dtimoth24@gmail.com', '0615292503', '$2y$10$xp5GcSthv5QNPfv0YrpuIe14oqnFSgfZgdIm1blqK9XfEnpgW88ce', 'owner', NULL, 'active', '2026-05-11 01:16:48'),
+(6, 'Daniel Matope', 'dmatope24@gmail.com', '0615292503', '$2y$10$DF4Pzn5LeDMa2wj1IKDOduM7WEezY2tbYolDPPpdC9Kt1rAWmctRm', 'traveler', NULL, 'active', '2026-05-11 21:11:29'),
+(7, 'Samwel Matope', 'samtimoth4@gmail.com', '0655851270', '$2y$10$qmfwIgZHFnPX6uwNVLpFBeGzjZ7GABEiffZgeSqI6VKiM9T2WhZfC', 'worker', 5, 'active', '2026-06-15 23:43:21'),
+(8, 'dry food enterprise', 'dryfoodenterprise@gmail.com', '+255752492255', '$2y$10$yHkhgK4wHBPrSOGItv7k0eqY.NHkuw87TAxyXPA5em9hokZY2MFWq', 'traveler', NULL, 'active', '2026-06-16 00:11:42'),
+(9, 'shalom erick', 'dmatope2410@gmail.com', '0743651270', '$2y$10$BoHs0msXc/145JEp05a3P.XSpOxSnzvvJ7J6jpHfMTLEEe5icgHCO', 'worker', 5, 'active', '2026-06-16 09:58:18'),
+(10, 'erick ayo', 'erick@gmail.com', '+255752492255', '$2y$10$/4nmXMy8Ieb1QXm0ujwUIObQJ4z7ywwyr9J.jFPz.EhbYsPw3ruFK', 'traveler', NULL, 'active', '2026-06-16 10:03:14');
 
 --
 -- Indexes for dumped tables
@@ -401,6 +438,14 @@ ALTER TABLE `accommodation_images`
 ALTER TABLE `accommodation_services`
   ADD PRIMARY KEY (`id`),
   ADD KEY `fk_service_acc` (`accommodation_id`);
+
+--
+-- Indexes for table `accommodation_workers`
+--
+ALTER TABLE `accommodation_workers`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `uniq_acc_worker` (`accommodation_id`,`worker_id`),
+  ADD KEY `fk_aw_worker` (`worker_id`);
 
 --
 -- Indexes for table `admin_logs`
@@ -464,7 +509,8 @@ ALTER TABLE `service_images`
 --
 ALTER TABLE `users`
   ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `email` (`email`);
+  ADD UNIQUE KEY `email` (`email`),
+  ADD KEY `fk_user_owner` (`owner_id`);
 
 --
 -- AUTO_INCREMENT for dumped tables
@@ -495,6 +541,12 @@ ALTER TABLE `accommodation_services`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
+-- AUTO_INCREMENT for table `accommodation_workers`
+--
+ALTER TABLE `accommodation_workers`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+
+--
 -- AUTO_INCREMENT for table `admin_logs`
 --
 ALTER TABLE `admin_logs`
@@ -510,7 +562,7 @@ ALTER TABLE `amenities`
 -- AUTO_INCREMENT for table `bookings`
 --
 ALTER TABLE `bookings`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `owner_verifications`
@@ -522,7 +574,7 @@ ALTER TABLE `owner_verifications`
 -- AUTO_INCREMENT for table `payments`
 --
 ALTER TABLE `payments`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `rooms`
@@ -546,7 +598,7 @@ ALTER TABLE `service_images`
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 
 --
 -- Constraints for dumped tables
@@ -576,6 +628,13 @@ ALTER TABLE `accommodation_images`
 --
 ALTER TABLE `accommodation_services`
   ADD CONSTRAINT `fk_service_acc` FOREIGN KEY (`accommodation_id`) REFERENCES `accommodations` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `accommodation_workers`
+--
+ALTER TABLE `accommodation_workers`
+  ADD CONSTRAINT `fk_aw_acc` FOREIGN KEY (`accommodation_id`) REFERENCES `accommodations` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `fk_aw_worker` FOREIGN KEY (`worker_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `admin_logs`
@@ -619,6 +678,12 @@ ALTER TABLE `room_images`
 --
 ALTER TABLE `service_images`
   ADD CONSTRAINT `fk_service_image_service` FOREIGN KEY (`service_id`) REFERENCES `accommodation_services` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `users`
+--
+ALTER TABLE `users`
+  ADD CONSTRAINT `fk_user_owner` FOREIGN KEY (`owner_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

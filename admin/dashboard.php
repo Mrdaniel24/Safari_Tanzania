@@ -91,7 +91,7 @@ include __DIR__ . '/../includes/admin_header.php';
                 <span class="material-symbols-outlined text-emerald-600 text-3xl">payments</span>
                 <span class="text-xs font-bold bg-emerald-100 text-emerald-700 px-2.5 py-1 rounded-full">Revenue</span>
             </div>
-            <p class="text-3xl font-black text-slate-900">$<?= number_format($totalRevenue, 0) ?></p>
+            <p class="text-3xl font-black text-slate-900">Tsh <?= number_format($totalRevenue, 0) ?></p>
             <p class="text-xs text-slate-400 mt-1 font-semibold uppercase tracking-wide">Platform total</p>
         </div>
     </section>

@@ -72,7 +72,7 @@ include __DIR__ . '/../includes/header.php';
                         <tr class="hover:bg-zinc-50">
                             <td class="px-6 py-4 font-semibold text-zinc-900"><?= e($r['room_type']) ?></td>
                             <td class="px-6 py-4 font-bold text-amber-600">
-                                $<?= number_format((float)$r['price'], 2) ?>
+                                Tsh <?= number_format((float)$r['price'], 2) ?>
                             </td>
                             <td class="px-6 py-4 text-zinc-600">
                                 <span class="inline-flex items-center gap-1">

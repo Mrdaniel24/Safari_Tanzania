@@ -42,9 +42,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
 
             switch ($user['role']) {
-                case 'owner': redirect('owner/dashboard.php');
-                case 'admin': redirect('admin/dashboard.php');
-                default:      redirect('traveler/dashboard.php');
+                case 'owner':  redirect('owner/dashboard.php');
+                case 'admin':  redirect('admin/dashboard.php');
+                case 'worker': redirect('worker/dashboard.php');
+                default:       redirect('traveler/dashboard.php');
             }
         }
     }

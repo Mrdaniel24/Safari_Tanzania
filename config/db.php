@@ -51,7 +51,7 @@ function base_url(string $path = ''): string {
     // strip current sub-folder so we always resolve from project root
     $segments = explode('/', trim($script, '/'));
     // if we are inside /auth, /traveler, etc, drop the last segment
-    $known = ['auth','traveler','owner','admin','public','config','includes'];
+    $known = ['auth','traveler','owner','admin','public','config','includes','worker'];
     if (!empty($segments) && in_array(end($segments), $known, true)) {
         array_pop($segments);
     }

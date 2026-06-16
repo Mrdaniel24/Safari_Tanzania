@@ -63,6 +63,9 @@ $st = $pdo->prepare($sql);
 $st->execute($params);
 $rows = $st->fetchAll();
 
+// Only offer regions that actually have at least one approved accommodation.
+$regionOptions = $pdo->query("SELECT DISTINCT location FROM accommodations WHERE status = 'approved' AND location IS NOT NULL AND location <> '' ORDER BY location ASC")->fetchAll(PDO::FETCH_COLUMN);
+
 $view = ($_GET['view'] ?? 'grid') === 'map' ? 'map' : 'grid';
 
 // Build property data for the JS map
@@ -103,8 +106,8 @@ $dashUrl = $role === 'owner'
 /* LISTING PREMIUM OVERRIDES */
 .listing-page { background: var(--white) !important; color: var(--navy) !important; font-family: 'Inter', sans-serif !important; }
 .listing-page header.bg-white { background: rgba(6,14,42,.94) !important; border-color: rgba(30,198,255,.12) !important; backdrop-filter: blur(20px) saturate(180%); -webkit-backdrop-filter: blur(20px) saturate(180%); box-shadow: 0 4px 30px rgba(0,0,0,.25) !important; }
-.listing-page header a, .listing-page header nav a { color: rgba(255,255,255,.78) !important; }
-.listing-page header a:hover, .listing-page header nav a:hover { color: #fff !important; }
+.listing-page header a:not(.pill-nav__link), .listing-page header nav a:not(.pill-nav__link) { color: rgba(255,255,255,.78) !important; }
+.listing-page header a:hover:not(.pill-nav__link), .listing-page header nav a:hover:not(.pill-nav__link) { color: #fff !important; }
 .listing-page header .text-amber-600 { color: var(--cyan) !important; }
 .listing-page header .bg-amber-500, .listing-page .bg-amber-500 { background: var(--gradient-btn) !important; color: #fff !important; box-shadow: var(--shadow-blue) !important; }
 .listing-page header .bg-stone-900 { background: var(--gradient-btn) !important; }
@@ -142,6 +145,7 @@ $dashUrl = $role === 'owner'
 }
 </style>
 <link rel="stylesheet" href="<?= e(base_url('assets/css/premium.css')) ?>?v=estate-connected">
+<link rel="stylesheet" href="<?= e(base_url('assets/css/pill-nav.css')) ?>">
 </head>
 <body class="bg-stone-50 text-stone-900 listing-page">
 
@@ -151,17 +155,22 @@ $dashUrl = $role === 'owner'
     <a href="<?= e(base_url('public/index.php')) ?>" class="flex items-center gap-2 text-stone-900">
       <img src="<?= $logoUrl ?>" alt="Safari Tanzania" class="brand-logo-img">
     </a>
-    <nav class="hidden md:flex items-center gap-8 text-sm font-medium text-stone-700">
-      <a href="<?= e(base_url('public/index.php')) ?>" class="hover:text-amber-600">Home</a>
-      <a href="<?= e(base_url('public/accommodation_listing.php')) ?>" class="text-amber-600">Properties</a>
+    <div class="hidden md:flex items-center gap-4">
+      <ul class="pill-nav">
+        <li class="pill-nav__cursor" aria-hidden="true"></li>
+        <li class="pill-nav__item"><a href="<?= e(base_url('public/index.php')) ?>" class="pill-nav__link">Home</a></li>
+        <li class="pill-nav__item"><a href="<?= e(base_url('public/accommodation_listing.php')) ?>" class="pill-nav__link">Properties</a></li>
+        <?php if ($user): ?>
+          <li class="pill-nav__item"><a href="<?= e($dashUrl) ?>" class="pill-nav__link">Dashboard</a></li>
+          <li class="pill-nav__item"><a href="<?= e(base_url('traveler/my_bookings.php')) ?>" class="pill-nav__link">My Bookings</a></li>
+        <?php endif; ?>
+      </ul>
       <?php if ($user): ?>
-        <a href="<?= e($dashUrl) ?>" class="hover:text-amber-600">Dashboard</a>
-        <a href="<?= e(base_url('traveler/my_bookings.php')) ?>" class="hover:text-amber-600">My Bookings</a>
-        <a href="<?= e(base_url('auth/logout.php')) ?>" class="bg-stone-900 text-white px-4 py-2 rounded-full hover:bg-stone-800">Logout</a>
+        <a href="<?= e(base_url('auth/logout.php')) ?>" class="bg-stone-900 text-white px-4 py-2 rounded-full hover:bg-stone-800 text-sm font-semibold">Logout</a>
       <?php else: ?>
-        <a href="<?= e(base_url('auth/login.php')) ?>" class="bg-amber-500 text-white px-4 py-2 rounded-full font-semibold hover:bg-amber-600">Login</a>
+        <a href="<?= e(base_url('auth/login.php')) ?>" class="bg-amber-500 text-white px-4 py-2 rounded-full font-semibold hover:bg-amber-600 text-sm">Login</a>
       <?php endif; ?>
-    </nav>
+    </div>
   </div>
 </header>
 
@@ -184,7 +193,7 @@ $dashUrl = $role === 'owner'
       <span class="block text-xs font-bold uppercase tracking-wider text-stone-700 mb-1">Region</span>
       <select name="region" class="w-full rounded-lg border-stone-200 text-sm focus:border-amber-500 focus:ring-amber-500">
         <option value="">All regions</option>
-        <?php foreach (['Serengeti National Park','Ngorongoro Crater','Zanzibar','Tarangire','Lake Manyara','Arusha'] as $opt): ?>
+        <?php foreach ($regionOptions as $opt): ?>
           <option value="<?= e($opt) ?>" <?= $region === $opt ? 'selected' : '' ?>><?= e($opt) ?></option>
         <?php endforeach; ?>
       </select>
@@ -194,9 +203,9 @@ $dashUrl = $role === 'owner'
       <span class="block text-xs font-bold uppercase tracking-wider text-stone-700 mb-1">Price Range</span>
       <select name="price" class="w-full rounded-lg border-stone-200 text-sm focus:border-amber-500 focus:ring-amber-500">
         <option value="">Any price</option>
-        <option value="200-500"  <?= $price==='200-500'  ? 'selected':'' ?>>$200 - $500 / night</option>
-        <option value="500-1000" <?= $price==='500-1000' ? 'selected':'' ?>>$500 - $1,000 / night</option>
-        <option value="1000+"    <?= $price==='1000+'    ? 'selected':'' ?>>$1,000+ / night</option>
+        <option value="200-500"  <?= $price==='200-500'  ? 'selected':'' ?>>Tsh 200 - Tsh 500 / night</option>
+        <option value="500-1000" <?= $price==='500-1000' ? 'selected':'' ?>>Tsh 500 - Tsh 1,000 / night</option>
+        <option value="1000+"    <?= $price==='1000+'    ? 'selected':'' ?>>Tsh 1,000+ / night</option>
       </select>
     </label>
 
@@ -307,7 +316,7 @@ $dashUrl = $role === 'owner'
             <div class="flex items-center justify-between mt-5 pt-4 border-t border-stone-100">
               <p class="text-stone-900">
                 <?php if (!is_null($a['from_price'])): ?>
-                  <span class="font-extrabold text-xl">$<?= e(number_format((float)$a['from_price'], 0)) ?></span>
+                  <span class="font-extrabold text-xl">Tsh <?= e(number_format((float)$a['from_price'], 0)) ?></span>
                   <span class="text-stone-500 text-sm">/ night</span>
                 <?php else: ?>
                   <span class="text-stone-500 text-sm">Price on request</span>
@@ -445,7 +454,7 @@ $dashUrl = $role === 'owner'
     const [lat, lon] = coordsFor(p.location);
     bounds.push([lat, lon]);
 
-    const price  = p.price ? '$' + Math.round(p.price) + '<span style="color:#78716c;font-weight:400">/night</span>' : 'Price on request';
+    const price  = p.price ? 'Tsh ' + Math.round(p.price) + '<span style="color:#78716c;font-weight:400">/night</span>' : 'Price on request';
     const img    = p.image ? '<img src="' + p.image + '" style="width:100%;height:80px;object-fit:cover;border-radius:8px;margin-bottom:8px;">' : '';
     const stars  = 'â˜…'.repeat(Math.round(p.rating));
     const popup  =
@@ -469,6 +478,7 @@ $dashUrl = $role === 'owner'
 })();
 </script>
 <?php endif; ?>
+<script src="<?= e(base_url('assets/js/pill-nav.js')) ?>" defer></script>
 </body>
 </html>
 

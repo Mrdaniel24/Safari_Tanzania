@@ -13,10 +13,14 @@ const DB_CHARSET = 'utf8mb4';
 
 // --- Session bootstrap (single source of truth) ---
 if (session_status() === PHP_SESSION_NONE) {
-    // Secure cookie params (works on localhost; tighten in production)
+    // Cookie params: secure flag enabled on HTTPS (auto-detected)
+    $isHttps = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+        || (int)($_SERVER['SERVER_PORT'] ?? 80) === 443;
     session_set_cookie_params([
         'lifetime' => 0,
         'path'     => '/',
+        'domain'   => '',
+        'secure'   => $isHttps,
         'httponly' => true,
         'samesite' => 'Lax',
     ]);

@@ -1,5 +1,6 @@
 ﻿<?php
 require_once __DIR__ . '/../config/db.php';
+require_once __DIR__ . '/../config/security.php';
 
 $id = (int)($_GET['id'] ?? 0);
 if ($id <= 0) { redirect('public/accommodation_listing.php'); }
@@ -574,6 +575,31 @@ if (!$galleryImages) $galleryImages = [$heroImg];
       <a href="#" class="block text-center mt-6 border border-stone-300 hover:border-amber-500 text-stone-700 font-semibold py-3 rounded-lg transition">
         Contact Host
       </a>
+      <!-- BOOKING WIDGET -->
+      <div class="mt-6 bg-white border border-stone-100 rounded-lg p-4">
+        <h4 class="font-extrabold mb-3">Check availability & price</h4>
+        <form id="booking-widget" class="space-y-3">
+          <input type="hidden" name="acc_id" value="<?= (int)$acc['id'] ?>">
+          <?= csrf_field() ?>
+          <div>
+            <label class="block text-sm text-stone-600">Check-in</label>
+            <input type="date" name="check_in" class="w-full border rounded px-3 py-2" required>
+          </div>
+          <div>
+            <label class="block text-sm text-stone-600">Check-out</label>
+            <input type="date" name="check_out" class="w-full border rounded px-3 py-2" required>
+          </div>
+          <div>
+            <label class="block text-sm text-stone-600">Guests</label>
+            <input type="number" name="guests" class="w-full border rounded px-3 py-2" min="1" value="1" required>
+          </div>
+          <div class="flex gap-2">
+            <button type="button" id="btn-check" class="flex-1 bg-amber-500 text-white font-semibold px-4 py-2 rounded">Check Price</button>
+            <button type="button" id="btn-book" class="flex-1 bg-stone-200 text-stone-700 font-semibold px-4 py-2 rounded" disabled>Confirm Booking</button>
+          </div>
+        </form>
+        <div id="booking-result" class="mt-3 text-sm text-stone-700"></div>
+      </div>
     </div>
   </aside>
 </section>
@@ -652,6 +678,86 @@ if (!$galleryImages) $galleryImages = [$heroImg];
 </script>
 <?php endif; ?>
 <script src="<?= e(base_url('assets/js/pill-nav.js')) ?>" defer></script>
+<script>
+(function(){
+  const form = document.getElementById('booking-widget');
+  const btnCheck = document.getElementById('btn-check');
+  const btnBook = document.getElementById('btn-book');
+  const result = document.getElementById('booking-result');
+  let lastCalc = null;
+
+  btnCheck?.addEventListener('click', async () => {
+    result.textContent = 'Checking availability...';
+    const fd = new FormData(form);
+    const params = new URLSearchParams();
+    for (const [k,v] of fd.entries()) params.append(k,v);
+    try {
+      const resp = await fetch('<?= e(base_url('public/api/calc_price.php')) ?>', {
+        method: 'POST', body: params
+      });
+      const json = await resp.json();
+      if (!json.success) throw new Error(json.error || 'Unavailable');
+      lastCalc = json;
+      // build output
+      let html = '';
+      html += '<div class="font-semibold mb-2">Suggested rooms:</div>';
+      html += '<ul class="mb-2">';
+      for (const [roomId, qty] of Object.entries(json.suggestion)) {
+        html += '<li>Room ' + roomId + ': ' + qty + ' unit(s)</li>';
+      }
+      html += '</ul>';
+      html += '<div class="mb-1">Subtotal: Tsh ' + (json.pricing.subtotal ?? 0).toLocaleString() + '</div>';
+      html += '<div class="mb-1">VAT: Tsh ' + (json.pricing.vat ?? 0).toLocaleString() + '</div>';
+      html += '<div class="font-bold">Total: Tsh ' + (json.pricing.total ?? 0).toLocaleString() + '</div>';
+      result.innerHTML = html;
+      btnBook.disabled = false;
+    } catch (err) {
+      result.textContent = 'Error: ' + (err.message || 'Could not calculate');
+      btnBook.disabled = true;
+    }
+  });
+
+  btnBook?.addEventListener('click', async () => {
+    if (!lastCalc) return alert('Calculate price first');
+    btnBook.disabled = true;
+    result.textContent = 'Creating booking...';
+
+    // convert suggestion to items with prices (lines from calc)
+    const items = lastCalc.lines.map(l => ({ price: l.price, quantity: l.quantity || l.quantity, nights: l.nights }));
+    // but API expects room_id and rooms and price; suggestion map has keys that are room ids
+    const payloadItems = [];
+    // if suggestion is an object mapping room_id=>qty and lines correspond in order
+    let idx = 0;
+    for (const [roomId, qty] of Object.entries(lastCalc.suggestion)) {
+      const line = lastCalc.lines[idx] || { price: 0 };
+      payloadItems.push({ room_id: parseInt(roomId,10), rooms: qty, price: line.price || 0 });
+      idx++;
+    }
+
+    const payload = {
+      acc_id: form.querySelector('input[name="acc_id"]').value,
+      check_in: form.querySelector('input[name="check_in"]').value,
+      check_out: form.querySelector('input[name="check_out"]').value,
+      guests: parseInt(form.querySelector('input[name="guests"]').value,10) || 1,
+      items: payloadItems,
+      csrf_token: form.querySelector('input[name="csrf_token"]').value
+    };
+
+    try {
+      const resp = await fetch('<?= e(base_url('public/api/create_booking.php')) ?>', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
+      });
+      const json = await resp.json();
+      if (!json.success) throw new Error(json.error || 'Booking failed');
+      result.innerHTML = '<div class="font-bold text-green-600">Booking Created — ID ' + json.booking_id + '</div>';
+      btnBook.disabled = true;
+    } catch (err) {
+      result.textContent = 'Error: ' + (err.message || 'Could not book');
+      btnBook.disabled = false;
+    }
+  });
+})();
+</script>
 </body>
 </html>
 

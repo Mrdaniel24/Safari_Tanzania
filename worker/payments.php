@@ -24,13 +24,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $accIds) {
             redirect('worker/payments.php');
         }
 
-        $in   = implode(',', $accIds);
+        $placeholders = implode(',', array_fill(0, count($accIds), '?'));
+        $params = array_merge([$bookingId], $accIds);
         $stmt = $pdo->prepare("
             SELECT b.id, b.total_price FROM bookings b
             JOIN rooms r ON r.id = b.room_id
-            WHERE b.id = ? AND r.accommodation_id IN ($in) AND b.payment_status = 'pending'
+            WHERE b.id = ? AND r.accommodation_id IN ($placeholders) AND b.payment_status = 'pending'
         ");
-        $stmt->execute([$bookingId]);
+        $stmt->execute($params);
         $booking = $stmt->fetch();
 
         if (!$booking) {
@@ -57,21 +58,22 @@ $pendingBookings = [];
 $allPayments     = [];
 
 if ($accIds) {
-    $in = implode(',', $accIds);
+    $placeholders = implode(',', array_fill(0, count($accIds), '?'));
 
-    $stmt = $pdo->query("
+    $stmt = $pdo->prepare("
         SELECT b.*, u.full_name AS traveler_name, u.email AS traveler_email,
                r.room_type, a.name AS acc_name
         FROM bookings b
         JOIN rooms r ON r.id = b.room_id
         JOIN accommodations a ON a.id = r.accommodation_id
         JOIN users u ON u.id = b.traveler_id
-        WHERE r.accommodation_id IN ($in) AND b.payment_status = 'pending'
+        WHERE r.accommodation_id IN ($placeholders) AND b.payment_status = 'pending'
         ORDER BY b.created_at DESC
     ");
+    $stmt->execute($accIds);
     $pendingBookings = $stmt->fetchAll();
 
-    $stmt = $pdo->query("
+    $stmt = $pdo->prepare("
         SELECT p.*, b.booking_status, b.payment_status,
                u.full_name AS traveler_name, r.room_type, a.name AS acc_name
         FROM payments p
@@ -79,9 +81,10 @@ if ($accIds) {
         JOIN rooms r ON r.id = b.room_id
         JOIN accommodations a ON a.id = r.accommodation_id
         JOIN users u ON u.id = b.traveler_id
-        WHERE r.accommodation_id IN ($in)
+        WHERE r.accommodation_id IN ($placeholders)
         ORDER BY p.paid_at DESC
     ");
+    $stmt->execute($accIds);
     $allPayments = $stmt->fetchAll();
 }
 

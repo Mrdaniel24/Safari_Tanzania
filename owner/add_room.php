@@ -38,7 +38,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $room_amenities = trim($_POST['room_amenities']  ?? '');
     $old            = compact('room_type', 'price', 'capacity', 'total_rooms', 'room_amenities');
 
-    if ($room_type === '' || mb_strlen($room_type) > 100) $errors[] = 'Room type name is required.';
+    $allowedRoomTypes = ['Single Room', 'Double Room', 'VIP Single', 'VIP Double'];
+    if (!in_array($room_type, $allowedRoomTypes, true)) $errors[] = 'Please select a valid room type.';
     if (!is_numeric($price) || (float)$price <= 0) $errors[] = 'Price must be a positive number.';
     if ($capacity < 1 || $capacity > 20) $errors[] = 'Capacity must be between 1 and 20 guests.';
     if ($total_rooms < 1 || $total_rooms > 500) $errors[] = 'Number of units must be between 1 and 500.';
@@ -109,7 +110,13 @@ include __DIR__ . '/../includes/header.php';
 
     <div class="room-field">
       <label>Room Category / Type</label>
-      <input name="room_type" maxlength="100" required value="<?= e($old['room_type']) ?>" placeholder="VIP, Regular, Single, Double, Suite, Family Room">
+      <select name="room_type" id="room-type-select" required>
+        <option value="">— Select room type —</option>
+        <option value="Single Room"  <?= $old['room_type'] === 'Single Room'  ? 'selected' : '' ?>>Single Room</option>
+        <option value="Double Room"  <?= $old['room_type'] === 'Double Room'  ? 'selected' : '' ?>>Double Room</option>
+        <option value="VIP Single"   <?= $old['room_type'] === 'VIP Single'   ? 'selected' : '' ?>>VIP Single</option>
+        <option value="VIP Double"   <?= $old['room_type'] === 'VIP Double'   ? 'selected' : '' ?>>VIP Double</option>
+      </select>
     </div>
 
     <div class="room-grid">
@@ -159,6 +166,30 @@ include __DIR__ . '/../includes/header.php';
 <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
 <script src="<?= e(base_url('assets/js/crop-upload.js')) ?>?v=2"></script>
 <script>
+// Auto-suggest capacity when room type changes
+(function() {
+  const roomTypeSelect = document.getElementById('room-type-select');
+  const capacityInput  = document.querySelector('input[name="capacity"]');
+  if (roomTypeSelect && capacityInput) {
+    const capacityMap = {
+      'Single Room': 1,
+      'Double Room': 2,
+      'VIP Single': 1,
+      'VIP Double': 2,
+    };
+    roomTypeSelect.addEventListener('change', function() {
+      const suggested = capacityMap[this.value];
+      if (suggested !== undefined) {
+        capacityInput.value = suggested;
+      }
+    });
+    // Apply on page load if value already selected (e.g. after validation error)
+    if (roomTypeSelect.value && capacityMap[roomTypeSelect.value]) {
+      capacityInput.value = capacityMap[roomTypeSelect.value];
+    }
+  }
+})();
+
 new CropUploader({
     triggerBtn:      document.getElementById('room-add-btn'),
     fileInput:       document.getElementById('room-file-pick'),

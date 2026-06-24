@@ -20,6 +20,18 @@ function require_login(): void {
         flash_set('error', 'Please log in to continue.');
         redirect('auth/login.php');
     }
+
+    // Session idle timeout: 2 hours of inactivity
+    $maxIdle = 7200; // seconds
+    $lastActivity = $_SESSION['_last_activity'] ?? 0;
+    if ($lastActivity > 0 && (time() - $lastActivity) > $maxIdle) {
+        session_unset();
+        session_destroy();
+        flash_set('error', 'Session expired due to inactivity. Please login again.');
+        redirect('auth/login.php');
+    }
+    $_SESSION['_last_activity'] = time();
+
     $u = current_user();
     if (!$u || $u['status'] !== 'active') {
         session_unset();
@@ -66,4 +78,20 @@ function csrf_verify(?string $token): void {
         http_response_code(400);
         die('Invalid CSRF token.');
     }
+}
+
+// API-friendly role check: returns JSON 403 and exits when role not allowed
+function require_api_role(array $roles): void {
+    if (session_status() === PHP_SESSION_NONE) session_start();
+    $role = $_SESSION['role'] ?? '';
+    if (!in_array($role, $roles, true)) {
+        http_response_code(403);
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode(['error' => 'Insufficient role']);
+        exit;
+    }
+}
+
+function is_role(string $r): bool {
+    return isset($_SESSION['role']) && $_SESSION['role'] === $r;
 }

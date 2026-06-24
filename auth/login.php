@@ -1,6 +1,7 @@
 ﻿<?php
 require_once __DIR__ . '/../config/db.php';
 require_once __DIR__ . '/../config/auth.php';
+require_once __DIR__ . '/../config/security.php';
 
 $errors = [];
 $email_old = '';
@@ -9,43 +10,55 @@ $remember = false;
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     csrf_verify($_POST['_csrf'] ?? null);
 
-    $email     = trim(strtolower($_POST['email'] ?? ''));
-    $password  = $_POST['password'] ?? '';
-    $remember  = !empty($_POST['remember']);
-    $email_old = $email;
+    // Rate limiting: max 5 login attempts per 60 seconds per IP
+    $remaining = rate_limit_check('login');
+    if ($remaining <= 0) {
+        $errors[] = 'Too many login attempts. Please wait 60 seconds and try again.';
+    }
 
-    if (!filter_var($email, FILTER_VALIDATE_EMAIL) || $password === '') {
-        $errors[] = 'Enter a valid email and password.';
-    } else {
-        $stmt = $pdo->prepare('SELECT * FROM users WHERE email = ?');
-        $stmt->execute([$email]);
-        $user = $stmt->fetch();
+    if (!$errors) {
+        $email     = trim(strtolower($_POST['email'] ?? ''));
+        $password  = $_POST['password'] ?? '';
+        $remember  = !empty($_POST['remember']);
+        $email_old = $email;
 
-        if (!$user || !password_verify($password, $user['password'])) {
-            $errors[] = 'Invalid credentials.';
-        } elseif ($user['status'] !== 'active') {
-            $errors[] = 'Your account is suspended.';
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL) || $password === '') {
+            $errors[] = 'Enter a valid email and password.';
         } else {
-            session_regenerate_id(true);
-            $_SESSION['user_id']   = (int)$user['id'];
-            $_SESSION['role']      = $user['role'];
-            $_SESSION['full_name'] = $user['full_name'];
+            $stmt = $pdo->prepare('SELECT * FROM users WHERE email = ?');
+            $stmt->execute([$email]);
+            $user = $stmt->fetch();
 
-            if ($remember) {
-                $params = session_get_cookie_params();
-                setcookie(session_name(), session_id(), [
-                    'expires'  => time() + 60 * 60 * 24 * 30,
-                    'path'     => $params['path'],
-                    'httponly' => true,
-                    'samesite' => 'Lax',
-                ]);
-            }
+            if (!$user || !password_verify($password, $user['password'])) {
+                $errors[] = 'Invalid credentials.';
+                rate_limit_tick('login');
+            } elseif ($user['status'] !== 'active') {
+                $errors[] = 'Your account is suspended.';
+                rate_limit_tick('login');
+            } else {
+                rate_limit_clear('login');
+                session_regenerate_id(true);
+                $_SESSION['user_id']   = (int)$user['id'];
+                $_SESSION['role']      = $user['role'];
+                $_SESSION['full_name'] = $user['full_name'];
+                $_SESSION['_last_activity'] = time();
 
-            switch ($user['role']) {
-                case 'owner':  redirect('owner/dashboard.php');
-                case 'admin':  redirect('admin/dashboard.php');
-                case 'worker': redirect('worker/dashboard.php');
-                default:       redirect('traveler/dashboard.php');
+                if ($remember) {
+                    $params = session_get_cookie_params();
+                    setcookie(session_name(), session_id(), [
+                        'expires'  => time() + 60 * 60 * 24 * 30,
+                        'path'     => $params['path'],
+                        'httponly' => true,
+                        'samesite' => 'Lax',
+                    ]);
+                }
+
+                switch ($user['role']) {
+                    case 'owner':  redirect('owner/dashboard.php');
+                    case 'admin':  redirect('admin/dashboard.php');
+                    case 'worker': redirect('worker/dashboard.php');
+                    default:       redirect('traveler/dashboard.php');
+                }
             }
         }
     }

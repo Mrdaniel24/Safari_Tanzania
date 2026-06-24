@@ -11,13 +11,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $accIds) {
 
     if (($_POST['action'] ?? '') === 'complete') {
         $bookingId = (int)($_POST['booking_id'] ?? 0);
-        $in = implode(',', $accIds);
+        $placeholders = implode(',', array_fill(0, count($accIds), '?'));
+        $params = array_merge([$bookingId], $accIds);
         $stmt = $pdo->prepare("
             SELECT b.id FROM bookings b
             JOIN rooms r ON r.id = b.room_id
-            WHERE b.id = ? AND r.accommodation_id IN ($in) AND b.booking_status = 'confirmed'
+            WHERE b.id = ? AND r.accommodation_id IN ($placeholders) AND b.booking_status = 'confirmed'
         ");
-        $stmt->execute([$bookingId]);
+        $stmt->execute($params);
         if ($stmt->fetch()) {
             $pdo->prepare("UPDATE bookings SET booking_status = 'completed' WHERE id = ?")
                 ->execute([$bookingId]);
@@ -35,18 +36,23 @@ if (!in_array($statusFilter, $allowed, true)) $statusFilter = 'all';
 
 $bookings = [];
 if ($accIds) {
-    $in = implode(',', $accIds);
-    $where = $statusFilter !== 'all' ? "AND b.booking_status = " . $pdo->quote($statusFilter) : '';
-    $stmt = $pdo->query("
+    $placeholders = implode(',', array_fill(0, count($accIds), '?'));
+    $sql = "
         SELECT b.*, u.full_name AS traveler_name, u.email AS traveler_email,
                r.room_type, a.name AS acc_name
         FROM bookings b
         JOIN rooms r ON r.id = b.room_id
         JOIN accommodations a ON a.id = r.accommodation_id
         JOIN users u ON u.id = b.traveler_id
-        WHERE r.accommodation_id IN ($in) $where
-        ORDER BY b.created_at DESC
-    ");
+        WHERE r.accommodation_id IN ($placeholders)";
+    $params = $accIds;
+    if ($statusFilter !== 'all') {
+        $sql .= " AND b.booking_status = ?";
+        $params[] = $statusFilter;
+    }
+    $sql .= " ORDER BY b.created_at DESC";
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute($params);
     $bookings = $stmt->fetchAll();
 }
 

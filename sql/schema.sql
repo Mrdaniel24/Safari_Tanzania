@@ -87,18 +87,19 @@ CREATE TABLE accommodation_amenities (
 -- 3.6 bookings
 -- ---------------------------------------------------------------------
 CREATE TABLE bookings (
-    id              INT AUTO_INCREMENT PRIMARY KEY,
-    traveler_id     INT NOT NULL,
-    room_id         INT NOT NULL,
-    check_in        DATE NOT NULL,
-    check_out       DATE NOT NULL,
-    guests          INT NOT NULL DEFAULT 1,
-    total_price     DECIMAL(10,2) NOT NULL,
-    booking_status  ENUM('confirmed','cancelled','completed') NOT NULL DEFAULT 'confirmed',
-    payment_status  ENUM('pending','paid','failed') NOT NULL DEFAULT 'pending',
-    created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    id               INT AUTO_INCREMENT PRIMARY KEY,
+    traveler_id      INT NOT NULL,
+    accommodation_id INT NOT NULL,
+    check_in         DATE NOT NULL,
+    check_out        DATE NOT NULL,
+    nights           INT NOT NULL DEFAULT 1,
+    guests           INT NOT NULL DEFAULT 1,
+    total_price      DECIMAL(12,2) NOT NULL,
+    booking_status   ENUM('confirmed','cancelled','completed') NOT NULL DEFAULT 'confirmed',
+    payment_status   ENUM('pending','paid','failed') NOT NULL DEFAULT 'pending',
+    created_at       TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_book_user FOREIGN KEY (traveler_id) REFERENCES users(id) ON DELETE CASCADE,
-    CONSTRAINT fk_book_room FOREIGN KEY (room_id)     REFERENCES rooms(id) ON DELETE CASCADE
+    CONSTRAINT fk_book_acc  FOREIGN KEY (accommodation_id) REFERENCES accommodations(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
 -- ---------------------------------------------------------------------
@@ -115,6 +116,33 @@ CREATE TABLE payments (
     CONSTRAINT fk_pay_book FOREIGN KEY (booking_id) REFERENCES bookings(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
+    -- ---------------------------------------------------------------------
+    -- 3.14 booking_items (supports multiple room lines per booking)
+    -- ---------------------------------------------------------------------
+    CREATE TABLE booking_items (
+        id              INT AUTO_INCREMENT PRIMARY KEY,
+        booking_id      INT NOT NULL,
+        room_id         INT NOT NULL,
+        rooms_booked    INT NOT NULL DEFAULT 1,
+        price_per_room  DECIMAL(10,2) NOT NULL,
+        subtotal        DECIMAL(12,2) NOT NULL,
+        created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        CONSTRAINT fk_bi_booking FOREIGN KEY (booking_id) REFERENCES bookings(id) ON DELETE CASCADE,
+        CONSTRAINT fk_bi_room    FOREIGN KEY (room_id)    REFERENCES rooms(id) ON DELETE CASCADE
+    ) ENGINE=InnoDB;
+
+    -- ---------------------------------------------------------------------
+    -- 3.15 room_inventory (tracks booked rooms per date for availability)
+    -- ---------------------------------------------------------------------
+    CREATE TABLE room_inventory (
+        id             INT AUTO_INCREMENT PRIMARY KEY,
+        room_id        INT NOT NULL,
+        inventory_date DATE NOT NULL,
+        booked_rooms   INT NOT NULL DEFAULT 0,
+        UNIQUE KEY uniq_room_date (room_id, inventory_date),
+        CONSTRAINT fk_ri_room FOREIGN KEY (room_id) REFERENCES rooms(id) ON DELETE CASCADE
+    ) ENGINE=InnoDB;
+
 -- ---------------------------------------------------------------------
 -- 3.8 admin_logs
 -- ---------------------------------------------------------------------
@@ -124,6 +152,32 @@ CREATE TABLE admin_logs (
     action     TEXT NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_log_admin FOREIGN KEY (admin_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- ---------------------------------------------------------------------
+-- 3.16 notifications
+-- ---------------------------------------------------------------------
+CREATE TABLE notifications (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    type VARCHAR(80) NOT NULL,
+    payload JSON NULL,
+    is_read TINYINT(1) NOT NULL DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_notif_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- ---------------------------------------------------------------------
+-- 3.17 activity_logs
+-- ---------------------------------------------------------------------
+CREATE TABLE activity_logs (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NULL,
+    action VARCHAR(255) NOT NULL,
+    meta JSON NULL,
+    ip_address VARCHAR(45),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_activity_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
 ) ENGINE=InnoDB;
 
 -- =====================================================================

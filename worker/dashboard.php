@@ -13,27 +13,31 @@ $pendingPayments= 0;
 $recentBookings = [];
 
 if ($accIds) {
-    $in = implode(',', $accIds);
+    $placeholders = implode(',', array_fill(0, count($accIds), '?'));
 
-    $stmt = $pdo->query("SELECT COUNT(*) FROM bookings b JOIN rooms r ON r.id = b.room_id WHERE r.accommodation_id IN ($in)");
+    $stmt = $pdo->prepare("SELECT COUNT(*) FROM bookings b JOIN rooms r ON r.id = b.room_id WHERE r.accommodation_id IN ($placeholders)");
+    $stmt->execute($accIds);
     $totalBookings = (int)$stmt->fetchColumn();
 
-    $stmt = $pdo->query("SELECT COUNT(*) FROM bookings b JOIN rooms r ON r.id = b.room_id WHERE r.accommodation_id IN ($in) AND b.booking_status = 'confirmed'");
+    $stmt = $pdo->prepare("SELECT COUNT(*) FROM bookings b JOIN rooms r ON r.id = b.room_id WHERE r.accommodation_id IN ($placeholders) AND b.booking_status = 'confirmed'");
+    $stmt->execute($accIds);
     $confirmedCount = (int)$stmt->fetchColumn();
 
-    $stmt = $pdo->query("SELECT COUNT(*) FROM bookings b JOIN rooms r ON r.id = b.room_id WHERE r.accommodation_id IN ($in) AND b.payment_status = 'pending'");
+    $stmt = $pdo->prepare("SELECT COUNT(*) FROM bookings b JOIN rooms r ON r.id = b.room_id WHERE r.accommodation_id IN ($placeholders) AND b.payment_status = 'pending'");
+    $stmt->execute($accIds);
     $pendingPayments = (int)$stmt->fetchColumn();
 
-    $stmt = $pdo->query("
+    $stmt = $pdo->prepare("
         SELECT b.*, u.full_name AS traveler_name, r.room_type, a.name AS acc_name
         FROM bookings b
         JOIN rooms r ON r.id = b.room_id
         JOIN accommodations a ON a.id = r.accommodation_id
         JOIN users u ON u.id = b.traveler_id
-        WHERE r.accommodation_id IN ($in)
+        WHERE r.accommodation_id IN ($placeholders)
         ORDER BY b.created_at DESC
         LIMIT 5
     ");
+    $stmt->execute($accIds);
     $recentBookings = $stmt->fetchAll();
 }
 

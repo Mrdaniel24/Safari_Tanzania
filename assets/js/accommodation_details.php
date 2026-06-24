@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../config/db.php';
+require_once __DIR__ . '/../models/Availability.php';
 
 $id = (int)($_GET['id'] ?? 0);
 if ($id <= 0) { redirect('public/accommodation_listing.php'); }
@@ -15,6 +16,13 @@ if (!$acc) { http_response_code(404); die('Accommodation not found.'); }
 $rooms = $pdo->prepare('SELECT * FROM rooms WHERE accommodation_id = ? ORDER BY price ASC');
 $rooms->execute([$id]);
 $rooms = $rooms->fetchAll();
+
+// default availability snapshot today -> tomorrow
+$today = (new DateTime('today'))->format('Y-m-d');
+$tomorrow = (new DateTime('tomorrow'))->format('Y-m-d');
+$availList = getAvailableRooms($id, $today, $tomorrow);
+$availMap = [];
+foreach ($availList as $ar) { $availMap[$ar['id']] = $ar; }
 
 $amenities = $pdo->prepare(
     'SELECT am.name FROM amenities am
@@ -165,7 +173,7 @@ $heroImg = $acc['image_url'] ?: 'https://images.unsplash.com/photo-1469854523086
                   </span>
                   <span class="inline-flex items-center gap-1">
                     <span class="material-symbols-outlined" style="font-size:18px;">bed</span>
-                    <?= (int)$r['total_rooms'] ?> available
+                    <?= (int)($availMap[$r['id']]['available_rooms'] ?? $r['total_rooms']) ?> available
                   </span>
                 </div>
                 <?php if (!empty($r['description'])): ?>

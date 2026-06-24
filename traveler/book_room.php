@@ -65,18 +65,75 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $overlapping = (int)$ovl->fetchColumn();
 
         if ($overlapping >= (int)$room['total_rooms']) {
-            $errors[] = 'Sorry, this room is not available for the selected dates.';
+          // Find next available start date within the next 90 days for the same nights
+          $nights = (int)$d_in->diff($d_out)->days;
+          $searchLimitDays = 90;
+          $found = false;
+          $candidate = (clone $d_in);
+          $oneDay = new DateInterval('P1D');
+          $checkStmt = $pdo->prepare(
+            "SELECT COUNT(*) FROM bookings
+              WHERE room_id = ?
+              AND booking_status = 'confirmed'
+              AND NOT (check_out <= ? OR check_in >= ?)"
+          );
+
+          for ($i = 1; $i <= $searchLimitDays; $i++) {
+            $candidate->add($oneDay);
+            $candStart = $candidate->format('Y-m-d');
+            $candEndDt = (clone $candidate)->add(new DateInterval('P' . $nights . 'D'));
+            $candEnd = $candEndDt->format('Y-m-d');
+            $checkStmt->execute([$room_id, $candStart, $candEnd]);
+            $ov = (int)$checkStmt->fetchColumn();
+            if ($ov < (int)$room['total_rooms']) {
+              $found = true;
+              $availStart = $candStart;
+              $availEnd = $candEndDt->modify('-1 day')->format('Y-m-d');
+              break;
+            }
+          }
+
+          if ($found) {
+            $errors[] = 'Sorry, this room is not available for the selected dates. Next available: ' . $availStart . ' to ' . $availEnd . '.';
+          } else {
+            $errors[] = 'Sorry, this room is not available for the selected dates. No availability in the next ' . $searchLimitDays . ' days.';
+          }
         } else {
             $nights = (int)$d_in->diff($d_out)->days;
             $total  = $nights * (float)$room['price'] * $guests;
 
             $ins = $pdo->prepare(
-                'INSERT INTO bookings
-                 (traveler_id, room_id, check_in, check_out, guests, total_price, booking_status, payment_status)
-                 VALUES (?, ?, ?, ?, ?, ?, "confirmed", "pending")'
+              'INSERT INTO bookings
+               (traveler_id, room_id, check_in, check_out, guests, total_price, booking_status, payment_status)
+               VALUES (?, ?, ?, ?, ?, ?, "confirmed", "pending")'
             );
             $ins->execute([(int)$_SESSION['user_id'], $room_id, $check_in, $check_out, $guests, $total]);
             $booking_id = (int)$pdo->lastInsertId();
+
+            // Backfill booking_items and room_inventory so availability display (new system) reflects this booking
+            try {
+              $biStmt = $pdo->prepare(
+                'INSERT INTO booking_items (booking_id, room_id, rooms_booked, price_per_room, subtotal)
+                 VALUES (?, ?, ?, ?, ?)'
+              );
+              $biStmt->execute([$booking_id, $room_id, 1, $room['price'], $total]);
+
+              $invStmt = $pdo->prepare(
+                "INSERT INTO room_inventory (room_id, inventory_date, booked_rooms)
+                 VALUES (?, ?, ?)
+                 ON DUPLICATE KEY UPDATE booked_rooms = booked_rooms + ?"
+              );
+              $start = new DateTime($check_in);
+              $end = new DateTime($check_out);
+              $period = new DatePeriod($start, new DateInterval('P1D'), $end);
+              foreach ($period as $dt) {
+                $date = $dt->format('Y-m-d');
+                $invStmt->execute([$room_id, $date, 1, 1]);
+              }
+            } catch (Throwable $e) {
+              // non-fatal: don't break user's flow for analytics issues
+            }
+
             flash_set('success', 'Booking confirmed! Please complete payment.');
             redirect('traveler/payment.php?booking_id=' . $booking_id);
         }

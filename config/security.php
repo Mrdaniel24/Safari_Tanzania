@@ -134,3 +134,47 @@ function rate_limit_clear(string $action): void {
     $key = '_rate_' . $action . '_' . str_replace('.', '_', $ip);
     unset($_SESSION[$key]);
 }
+
+// ---------------------------------------------------------------------
+// Privacy helpers (PII masking)
+// ---------------------------------------------------------------------
+function mask_email(?string $email): string {
+    if (empty($email)) return '';
+    $parts = explode('@', $email);
+    if (count($parts) !== 2) return substr($email, 0, 1) . '***';
+    [$local, $domain] = $parts;
+    $localLen = strlen($local);
+    if ($localLen <= 2) return str_repeat('*', $localLen) . '@' . $domain;
+    $first = substr($local, 0, 1);
+    $masked = $first . str_repeat('*', max(2, min( strlen($local) - 1, 3)));
+    return $masked . '@' . $domain;
+}
+
+function mask_phone(?string $phone): string {
+    if (empty($phone)) return '';
+    $digits = preg_replace('/\D+/', '', $phone);
+    $len = strlen($digits);
+    if ($len <= 4) return str_repeat('*', $len);
+    $visible = substr($digits, -3);
+    return str_repeat('*', max(3, $len - 3)) . $visible;
+}
+
+/**
+ * Log a security-related event to the `security_events` table if it exists.
+ * Non-fatal: failures to write will be ignored.
+ */
+function log_security_event($pdo, $userId, string $eventType, $meta = null): void {
+    if (empty($pdo)) return;
+    try {
+        // Ensure table exists by attempting a harmless query
+        $pdo->query("SELECT 1 FROM security_events LIMIT 1");
+        $stmt = $pdo->prepare("INSERT INTO security_events (user_id, event_type, meta) VALUES (?, ?, ?)");
+        $jmeta = null;
+        if ($meta !== null) {
+            $jmeta = is_string($meta) ? $meta : json_encode($meta);
+        }
+        $stmt->execute([$userId, $eventType, $jmeta]);
+    } catch (Throwable $e) {
+        // ignore - security events are best-effort
+    }
+}

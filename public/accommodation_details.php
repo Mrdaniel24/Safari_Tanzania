@@ -120,7 +120,7 @@ if (!$galleryImages) $galleryImages = [$heroImg];
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
 <?php if (!GOOGLE_MAPS_API_KEY): ?>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <?php endif; ?>
 <style>
   body { font-family: 'Plus Jakarta Sans', sans-serif; }
@@ -615,8 +615,7 @@ if (!$galleryImages) $galleryImages = [$heroImg];
 </footer>
 
 <?php if (!GOOGLE_MAPS_API_KEY): ?>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV/XN/WLs=" crossorigin=""></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
 (function () {
   const el = document.getElementById('acc-map');
@@ -629,7 +628,34 @@ if (!$galleryImages) $galleryImages = [$heroImg];
   const fixedLng = <?= $hasCoords ? json_encode((float)$acc['longitude']) : 'null' ?>;
 
   if (typeof L === 'undefined') {
-    el.innerHTML = '<div style="height:100%;display:flex;align-items:center;justify-content:center;text-align:center;padding:32px;background:#fff;color:#0B1E5B;font-family:Plus Jakarta Sans,sans-serif;"><div><strong style="font-size:18px;display:block;margin-bottom:8px;">Map temporarily unavailable</strong><span style="color:#6b7b99;">Use the Google Maps button below to open this location.</span></div></div>';
+    // Fallback: render a lightweight SVG placeholder with a link to Google Maps
+    const gm = document.createElement('div');
+    gm.style.height = '100%';
+    gm.style.display = 'flex';
+    gm.style.alignItems = 'center';
+    gm.style.justifyContent = 'center';
+    gm.style.padding = '20px';
+    gm.style.background = '#fff';
+    gm.style.color = '#0B1E5B';
+    gm.style.fontFamily = "Plus Jakarta Sans, sans-serif";
+
+    const svg = `
+      <svg width="100%" height="220" viewBox="0 0 600 220" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="g" x1="0" x2="1"><stop offset="0" stop-color="#eef2ff"/><stop offset="1" stop-color="#fff"/></linearGradient>
+        </defs>
+        <rect x="0" y="0" width="100%" height="100%" fill="url(#g)" rx="8"/>
+        <g transform="translate(36,24)">
+          <circle cx="48" cy="64" r="18" fill="#f59e0b" stroke="#fff" stroke-width="4"/>
+          <rect x="96" y="28" width="420" height="84" rx="6" fill="#fff" stroke="#e6edf6"/>
+          <text x="112" y="56" font-family="Plus Jakarta Sans, sans-serif" font-size="18" fill="#0B1E5B">${escapeHtml(accName)}</text>
+          <text x="112" y="80" font-family="Plus Jakarta Sans, sans-serif" font-size="13" fill="#6b7b99">${escapeHtml(accAddr)}</text>
+        </g>
+      </svg>`;
+
+    gm.innerHTML = svg + '<div style="margin-top:10px;text-align:center;"><a href="' + gmUrl + '" target="_blank" rel="noopener noreferrer" style="display:inline-block;padding:8px 12px;border-radius:8px;border:1px solid #e6edf6;background:#fff;color:#0B1E5B;text-decoration:none;font-weight:700;">Open in Google Maps</a></div>';
+    el.innerHTML = '';
+    el.appendChild(gm);
     return;
   }
 
@@ -659,6 +685,12 @@ if (!$galleryImages) $galleryImages = [$heroImg];
   if (fixedLat !== null && fixedLng !== null) {
     buildMap(fixedLat, fixedLng, 15);
     return;
+  }
+
+  // small helper to escape inserted text into SVG
+  function escapeHtml(str){
+    if (str === null || str === undefined) return '';
+    return String(str).replace(/[&<>\"']/g, function(m){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"})[m]; });
   }
 
   // Try Nominatim geocoding first

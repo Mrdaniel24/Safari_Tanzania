@@ -30,11 +30,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $user = $stmt->fetch();
 
             if (!$user || !password_verify($password, $user['password'])) {
-                $errors[] = 'Invalid credentials.';
-                rate_limit_tick('login');
+              $errors[] = 'Invalid credentials.';
+              rate_limit_tick('login');
+              // Log failed login attempt (best-effort)
+              if (function_exists('log_security_event')) {
+                log_security_event($pdo, $user['id'] ?? null, 'failed_login', ['ip' => $_SERVER['REMOTE_ADDR'] ?? null, 'email' => $email]);
+              }
             } elseif ($user['status'] !== 'active') {
-                $errors[] = 'Your account is suspended.';
-                rate_limit_tick('login');
+              $errors[] = 'Your account is suspended.';
+              rate_limit_tick('login');
+              if (function_exists('log_security_event')) {
+                log_security_event($pdo, $user['id'] ?? null, 'failed_login', ['reason' => 'suspended', 'ip' => $_SERVER['REMOTE_ADDR'] ?? null]);
+              }
             } else {
                 rate_limit_clear('login');
                 session_regenerate_id(true);
@@ -42,6 +49,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $_SESSION['role']      = $user['role'];
                 $_SESSION['full_name'] = $user['full_name'];
                 $_SESSION['_last_activity'] = time();
+
+              // Log successful login
+              if (function_exists('log_security_event')) {
+                log_security_event($pdo, (int)$user['id'], 'login_success', ['ip' => $_SERVER['REMOTE_ADDR'] ?? null]);
+              }
 
                 if ($remember) {
                     $params = session_get_cookie_params();

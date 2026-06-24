@@ -6,12 +6,11 @@ checkRole('admin');
 $id = (int)($_GET['id'] ?? 0);
 if ($id <= 0) redirect('admin/accommodations.php');
 
-$stmt = $pdo->prepare("SELECT a.*, u.full_name AS owner_name, u.email AS owner_email, u.phone AS owner_phone, u.status AS owner_status,
-                              ov.business_name AS verification_business_name, ov.property_type AS verification_property_type,
+// Only load accommodation record and verification documents - no owner PII, no rooms, no booking info
+$stmt = $pdo->prepare("SELECT a.*, ov.business_name AS verification_business_name, ov.property_type AS verification_property_type,
                               ov.registration_number, ov.business_address, ov.document_path, ov.document_name,
                               ov.status AS verification_status, ov.admin_notes, ov.submitted_at, ov.reviewed_at
                        FROM accommodations a
-                       JOIN users u ON u.id = a.owner_id
                        LEFT JOIN owner_verifications ov ON ov.owner_id = a.owner_id
                        WHERE a.id = ?");
 $stmt->execute([$id]);
@@ -21,46 +20,16 @@ if (!$acc) {
     die('Accommodation not found.');
 }
 
-$images = [];
+$verificationDocs = [];
 try {
+    if (!empty($acc['document_path'])) {
+        $verificationDocs[] = ['path' => $acc['document_path'], 'name' => $acc['document_name'] ?? 'Document'];
+    }
     $img = $pdo->prepare('SELECT * FROM accommodation_images WHERE accommodation_id = ? ORDER BY is_cover DESC, sort_order ASC, id ASC');
     $img->execute([$id]);
+    // Keep images only for context, not room or owner PII
     $images = $img->fetchAll();
-} catch (Throwable $e) {}
-
-$rooms = $pdo->prepare('SELECT * FROM rooms WHERE accommodation_id = ? ORDER BY price ASC, id ASC');
-$rooms->execute([$id]);
-$rooms = $rooms->fetchAll();
-
-$roomImagesByRoom = [];
-try {
-    $roomIds = array_map(fn($r) => (int)$r['id'], $rooms);
-    if ($roomIds) {
-        $placeholders = implode(',', array_fill(0, count($roomIds), '?'));
-        $ri = $pdo->prepare("SELECT * FROM room_images WHERE room_id IN ($placeholders) ORDER BY is_cover DESC, sort_order ASC, id ASC");
-        $ri->execute($roomIds);
-        foreach ($ri->fetchAll() as $row) {
-            $roomImagesByRoom[(int)$row['room_id']][] = $row;
-        }
-    }
-} catch (Throwable $e) {}
-
-$services = [];
-$serviceImagesByService = [];
-try {
-    $svc = $pdo->prepare('SELECT * FROM accommodation_services WHERE accommodation_id = ? ORDER BY is_visible DESC, created_at DESC, id DESC');
-    $svc->execute([$id]);
-    $services = $svc->fetchAll();
-    $serviceIds = array_map(fn($s) => (int)$s['id'], $services);
-    if ($serviceIds) {
-        $placeholders = implode(',', array_fill(0, count($serviceIds), '?'));
-        $si = $pdo->prepare("SELECT * FROM service_images WHERE service_id IN ($placeholders) ORDER BY sort_order ASC, id ASC");
-        $si->execute($serviceIds);
-        foreach ($si->fetchAll() as $row) {
-            $serviceImagesByService[(int)$row['service_id']][] = $row;
-        }
-    }
-} catch (Throwable $e) {}
+} catch (Throwable $e) { $images = []; }
 
 $cover = $images[0]['image_path'] ?? ($acc['image_url'] ?: 'https://images.unsplash.com/photo-1516426122078-c23e76319801?auto=format&fit=crop&w=1400&q=80');
 $area = ($acc['ward_area'] ?? '') === 'Other' ? ($acc['area_other'] ?? '') : ($acc['ward_area'] ?? '');
@@ -77,6 +46,10 @@ $verificationClass = match($acc['verification_status'] ?? '') {
     'rejected' => 'bg-red-100 text-red-700',
     default => 'bg-slate-100 text-slate-700',
 };
+// Rooms and services are intentionally not loaded into admin view per privacy policy.
+// Define as empty arrays so downstream `count()` checks do not fail.
+$rooms = [];
+$services = [];
 $checks = [
     ['label' => 'Accommodation images', 'ok' => count($images) > 0, 'value' => count($images) . ' uploaded'],
     ['label' => 'Room setup', 'ok' => count($rooms) > 0, 'value' => count($rooms) . ' room type' . (count($rooms) === 1 ? '' : 's')],
@@ -166,68 +139,23 @@ include __DIR__ . '/../includes/admin_header.php';
             </div>
 
             <div class="review-card p-6">
-                <div class="flex items-center justify-between gap-3 mb-4">
-                    <h3 class="text-xl font-bold">Accommodation Images</h3>
-                    <span class="text-sm text-slate-500"><?= count($images) ?> image<?= count($images) === 1 ? '' : 's' ?></span>
-                </div>
-                <?php if (!$images): ?>
-                    <p class="text-slate-500">No accommodation images uploaded.</p>
+                <h3 class="text-xl font-bold mb-4">Verification Documents</h3>
+                <?php if (empty($verificationDocs) && empty($images)): ?>
+                    <p class="text-slate-500">No verification documents uploaded.</p>
                 <?php else: ?>
-                    <div class="review-thumb-grid">
-                        <?php foreach ($images as $img): ?>
-                            <img src="<?= e($img['image_path']) ?>" alt="Accommodation image" class="review-thumb" data-review-image data-caption="Accommodation image">
+                    <div class="space-y-3">
+                        <?php foreach ($verificationDocs as $doc): ?>
+                            <a href="<?= e($doc['path']) ?>" target="_blank" class="inline-flex items-center gap-2 text-sm font-semibold text-sky-700 hover:underline">
+                                <span class="material-symbols-outlined">description</span> <?= e($doc['name'] ?? 'Document') ?>
+                            </a>
                         <?php endforeach; ?>
-                    </div>
-                <?php endif; ?>
-            </div>
-
-            <div class="review-card p-6">
-                <h3 class="text-xl font-bold mb-4">Rooms</h3>
-                <?php if (!$rooms): ?>
-                    <p class="text-slate-500">No rooms have been added.</p>
-                <?php else: ?>
-                    <div class="space-y-4">
-                        <?php foreach ($rooms as $room): $rimgs = $roomImagesByRoom[(int)$room['id']] ?? []; ?>
-                            <article class="rounded-2xl border border-slate-100 bg-slate-50/60 p-4">
-                                <div class="flex flex-wrap justify-between gap-3">
-                                    <div>
-                                        <h4 class="font-bold text-slate-900"><?= e($room['room_type']) ?></h4>
-                                        <p class="text-sm text-slate-500"><?= (int)$room['capacity'] ?> guests · <?= (int)$room['total_rooms'] ?> rooms · Tsh <?= number_format((float)$room['price'], 2) ?></p>
-                                    </div>
-                                </div>
-                                <?php if (!empty($room['room_amenities'])): ?><p class="text-sm text-slate-600 mt-2"><?= e($room['room_amenities']) ?></p><?php endif; ?>
-                                <?php if ($rimgs): ?>
-                                    <div class="review-thumb-grid mt-3">
-                                        <?php foreach (array_slice($rimgs, 0, 4) as $img): ?><img src="<?= e($img['image_path']) ?>" alt="Room image" class="review-thumb" data-review-image data-caption="<?= e($room['room_type']) ?> room image"><?php endforeach; ?>
-                                    </div>
-                                <?php endif; ?>
-                            </article>
-                        <?php endforeach; ?>
-                    </div>
-                <?php endif; ?>
-            </div>
-
-            <div class="review-card p-6">
-                <h3 class="text-xl font-bold mb-4">Services</h3>
-                <?php if (!$services): ?>
-                    <p class="text-slate-500">No services have been added.</p>
-                <?php else: ?>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <?php foreach ($services as $svc): $simgs = $serviceImagesByService[(int)$svc['id']] ?? []; ?>
-                            <article class="rounded-2xl border border-slate-100 bg-slate-50/60 p-4">
-                                <div class="flex items-start justify-between gap-3">
-                                    <h4 class="font-bold text-slate-900"><?= e($svc['name']) ?></h4>
-                                    <span class="text-xs font-semibold px-2.5 py-1 rounded-full <?= (int)$svc['is_visible'] ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-700' ?>"><?= (int)$svc['is_visible'] ? 'visible' : 'hidden' ?></span>
-                                </div>
-                                <p class="text-sm text-slate-500 mt-1"><?= $svc['price'] !== null ? 'Tsh ' . number_format((float)$svc['price'], 2) : 'Price optional' ?></p>
-                                <?php if (!empty($svc['description'])): ?><p class="text-sm text-slate-600 mt-2"><?= e($svc['description']) ?></p><?php endif; ?>
-                                <?php if ($simgs): ?>
-                                    <div class="review-thumb-grid mt-3">
-                                        <?php foreach (array_slice($simgs, 0, 4) as $img): ?><img src="<?= e($img['image_path']) ?>" alt="Service image" class="review-thumb" data-review-image data-caption="<?= e($svc['name']) ?> service image"><?php endforeach; ?>
-                                    </div>
-                                <?php endif; ?>
-                            </article>
-                        <?php endforeach; ?>
+                        <?php if (!empty($images)): ?>
+                            <div class="review-thumb-grid mt-3">
+                                <?php foreach (array_slice($images, 0, 6) as $img): ?>
+                                    <img src="<?= e($img['image_path']) ?>" alt="Verification image" class="review-thumb" data-review-image>
+                                <?php endforeach; ?>
+                            </div>
+                        <?php endif; ?>
                     </div>
                 <?php endif; ?>
             </div>
@@ -264,22 +192,16 @@ include __DIR__ . '/../includes/admin_header.php';
             </div>
 
             <div class="review-card p-6">
-                <h3 class="text-lg font-bold mb-4">Owner</h3>
-                <p class="font-semibold text-slate-900"><?= e($acc['owner_name']) ?></p>
-                <p class="text-sm text-slate-500"><?= e($acc['owner_email']) ?></p>
-                <?php if (!empty($acc['owner_phone'])): ?><p class="text-sm text-slate-500"><?= e($acc['owner_phone']) ?></p><?php endif; ?>
-                <div class="mt-4 pt-4 border-t border-slate-100">
-                    <div class="flex items-center justify-between gap-3">
-                        <span class="text-sm text-slate-500">Verification</span>
-                        <span class="text-xs font-semibold px-2.5 py-1 rounded-full <?= $verificationClass ?>"><?= e($acc['verification_status'] ?: 'not submitted') ?></span>
-                    </div>
+                <h3 class="text-lg font-bold mb-4">Verification Summary</h3>
+                <div class="text-sm text-slate-600">
+                    <p><strong>Verification Status:</strong> <?= e($acc['verification_status'] ?? 'not submitted') ?></p>
                     <?php if (!empty($acc['verification_business_name'])): ?>
-                        <p class="text-sm text-slate-600 mt-3"><strong>Business:</strong> <?= e($acc['verification_business_name']) ?></p>
-                        <p class="text-sm text-slate-600"><strong>Reg No:</strong> <?= e($acc['registration_number']) ?></p>
+                        <p class="mt-2"><strong>Business:</strong> <?= e($acc['verification_business_name']) ?></p>
+                        <p><strong>Reg No:</strong> <?= e($acc['registration_number']) ?></p>
                     <?php endif; ?>
                     <?php if (!empty($acc['document_path'])): ?>
                         <a href="<?= e($acc['document_path']) ?>" target="_blank" class="inline-flex items-center gap-2 mt-4 text-sm font-semibold text-sky-700 hover:underline">
-                            <span class="material-symbols-outlined" style="font-size:18px;">description</span> View document
+                            <span class="material-symbols-outlined" style="font-size:18px;">description</span> View verification document
                         </a>
                     <?php endif; ?>
                 </div>

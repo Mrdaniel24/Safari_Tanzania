@@ -3,6 +3,7 @@
 // SAFARI TANZANIA - Role-based Middleware
 // =====================================================================
 require_once __DIR__ . '/db.php';
+require_once __DIR__ . '/security.php';
 
 function current_user(): ?array {
     if (empty($_SESSION['user_id'])) return null;

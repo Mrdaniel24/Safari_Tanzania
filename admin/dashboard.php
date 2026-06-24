@@ -12,23 +12,30 @@ $totalAcc     = (int)$pdo->query("SELECT COUNT(*) FROM accommodations")->fetchCo
 $pendingAcc   = (int)$pdo->query("SELECT COUNT(*) FROM accommodations WHERE status = 'pending'")->fetchColumn();
 $approvedAcc  = (int)$pdo->query("SELECT COUNT(*) FROM accommodations WHERE status = 'approved'")->fetchColumn();
 
-$totalBookings  = (int)$pdo->query("SELECT COUNT(*) FROM bookings")->fetchColumn();
-$confirmedBook  = (int)$pdo->query("SELECT COUNT(*) FROM bookings WHERE booking_status = 'confirmed'")->fetchColumn();
+// User status counts
+$activeUsers = (int)$pdo->query("SELECT COUNT(*) FROM users WHERE status = 'active' AND role != 'admin'")->fetchColumn();
+$suspendedUsers = (int)$pdo->query("SELECT COUNT(*) FROM users WHERE status != 'active' AND role != 'admin'")->fetchColumn();
 
-$totalRevenue = (float)$pdo->query("SELECT COALESCE(SUM(total_price),0) FROM bookings WHERE booking_status != 'cancelled'")->fetchColumn();
+// Security statistics: use security_events table if present
+try {
+    $failedLogins = (int)$pdo->query("SELECT COUNT(*) FROM security_events WHERE event_type = 'failed_login' AND created_at >= (NOW() - INTERVAL 1 DAY)")->fetchColumn();
+} catch (Throwable $e) {
+    $failedLogins = 0;
+}
+try {
+    // Active sessions approximated by successful logins in the last 30 minutes
+    $activeSessions = (int)$pdo->query("SELECT COUNT(DISTINCT user_id) FROM security_events WHERE event_type = 'login_success' AND created_at >= (NOW() - INTERVAL 30 MINUTE)")->fetchColumn();
+} catch (Throwable $e) {
+    $activeSessions = 0;
+}
+try {
+    $securityAlerts = (int)$pdo->query("SELECT COUNT(*) FROM security_events WHERE event_type = 'security_alert' AND created_at >= (NOW() - INTERVAL 7 DAY)")->fetchColumn();
+} catch (Throwable $e) {
+    $securityAlerts = 0;
+}
 
 // Properties pending approval
-$pending = $pdo->query("
-    SELECT a.*, u.full_name AS owner_name, u.email AS owner_email,
-           COUNT(r.id) AS room_count
-    FROM accommodations a
-    JOIN users u ON u.id = a.owner_id
-    LEFT JOIN rooms r ON r.accommodation_id = a.id
-    WHERE a.status = 'pending'
-    GROUP BY a.id
-    ORDER BY a.created_at ASC
-    LIMIT 10
-")->fetchAll();
+$pending = $pdo->query("SELECT a.id, a.name, a.region, a.status AS verification_status, a.created_at FROM accommodations a WHERE a.status = 'pending' ORDER BY a.created_at ASC LIMIT 10")->fetchAll();
 
 // Recent admin logs
 $logs = $pdo->query("
@@ -45,17 +52,24 @@ include __DIR__ . '/../includes/admin_header.php';
 ?>
 <div class="p-6 md:p-10 max-w-7xl mx-auto w-full space-y-8">
 
-    <!-- Stats row 1 -->
+    <!-- System Statistics -->
     <section class="grid grid-cols-2 lg:grid-cols-4 gap-5">
         <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
             <div class="flex items-center justify-between mb-3">
-                <span class="material-symbols-outlined text-sky-600 text-3xl">group</span>
-                <span class="text-xs font-bold bg-sky-100 text-sky-700 px-2.5 py-1 rounded-full">Users</span>
+                <span class="material-symbols-outlined text-violet-600 text-3xl">people</span>
+                <span class="text-xs font-bold bg-sky-100 text-sky-700 px-2.5 py-1 rounded-full">Owners</span>
             </div>
-            <p class="text-3xl font-black text-slate-900"><?= $totalUsers ?></p>
-            <p class="text-xs text-slate-400 mt-1 font-semibold uppercase tracking-wide">
-                <?= $totalOwners ?> owners Â· <?= $totalTravelers ?> travelers
-            </p>
+            <p class="text-3xl font-black text-slate-900"><?= $totalOwners ?></p>
+            <p class="text-xs text-slate-400 mt-1 font-semibold uppercase tracking-wide">Total Owners</p>
+        </div>
+
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
+            <div class="flex items-center justify-between mb-3">
+                <span class="material-symbols-outlined text-blue-600 text-3xl">tour</span>
+                <span class="text-xs font-bold bg-blue-100 text-blue-700 px-2.5 py-1 rounded-full">Travellers</span>
+            </div>
+            <p class="text-3xl font-black text-slate-900"><?= $totalTravelers ?></p>
+            <p class="text-xs text-slate-400 mt-1 font-semibold uppercase tracking-wide">Total Travellers</p>
         </div>
 
         <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
@@ -70,29 +84,55 @@ include __DIR__ . '/../includes/admin_header.php';
                 <?php endif; ?>
             </div>
             <p class="text-3xl font-black text-slate-900"><?= $totalAcc ?></p>
-            <p class="text-xs text-slate-400 mt-1 font-semibold uppercase tracking-wide">
-                <?= $approvedAcc ?> approved
-            </p>
+            <p class="text-xs text-slate-400 mt-1 font-semibold uppercase tracking-wide">Total Properties</p>
         </div>
 
         <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
             <div class="flex items-center justify-between mb-3">
-                <span class="material-symbols-outlined text-blue-600 text-3xl">calendar_month</span>
-                <span class="text-xs font-bold bg-blue-100 text-blue-700 px-2.5 py-1 rounded-full">Bookings</span>
+                <span class="material-symbols-outlined text-amber-600 text-3xl">fact_check</span>
+                <span class="text-xs font-bold bg-amber-100 text-amber-700 px-2.5 py-1 rounded-full">Pending</span>
             </div>
-            <p class="text-3xl font-black text-slate-900"><?= $totalBookings ?></p>
-            <p class="text-xs text-slate-400 mt-1 font-semibold uppercase tracking-wide">
-                <?= $confirmedBook ?> confirmed
-            </p>
+            <p class="text-3xl font-black text-slate-900"><?= $pendingAcc ?></p>
+            <p class="text-xs text-slate-400 mt-1 font-semibold uppercase tracking-wide">Pending Verifications</p>
+        </div>
+    </section>
+
+    <!-- User & Security Statistics -->
+    <section class="grid grid-cols-2 lg:grid-cols-4 gap-5 mt-4">
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
+            <div class="flex items-center justify-between mb-3">
+                <span class="material-symbols-outlined text-emerald-600 text-3xl">person</span>
+                <span class="text-xs font-bold bg-emerald-100 text-emerald-700 px-2.5 py-1 rounded-full">Active</span>
+            </div>
+            <p class="text-3xl font-black text-slate-900"><?= $activeUsers ?></p>
+            <p class="text-xs text-slate-400 mt-1 font-semibold uppercase tracking-wide">Active Users</p>
         </div>
 
         <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
             <div class="flex items-center justify-between mb-3">
-                <span class="material-symbols-outlined text-emerald-600 text-3xl">payments</span>
-                <span class="text-xs font-bold bg-emerald-100 text-emerald-700 px-2.5 py-1 rounded-full">Revenue</span>
+                <span class="material-symbols-outlined text-red-600 text-3xl">block</span>
+                <span class="text-xs font-bold bg-red-100 text-red-700 px-2.5 py-1 rounded-full">Suspended</span>
             </div>
-            <p class="text-3xl font-black text-slate-900">Tsh <?= number_format($totalRevenue, 0) ?></p>
-            <p class="text-xs text-slate-400 mt-1 font-semibold uppercase tracking-wide">Platform total</p>
+            <p class="text-3xl font-black text-slate-900"><?= $suspendedUsers ?></p>
+            <p class="text-xs text-slate-400 mt-1 font-semibold uppercase tracking-wide">Suspended Users</p>
+        </div>
+
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
+            <div class="flex items-center justify-between mb-3">
+                <span class="material-symbols-outlined text-rose-600 text-3xl">lock_clock</span>
+                <span class="text-xs font-bold bg-rose-100 text-rose-700 px-2.5 py-1 rounded-full">Security</span>
+            </div>
+            <p class="text-3xl font-black text-slate-900"><?= $failedLogins ?></p>
+            <p class="text-xs text-slate-400 mt-1 font-semibold uppercase tracking-wide">Failed Logins (24h)</p>
+        </div>
+
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
+            <div class="flex items-center justify-between mb-3">
+                <span class="material-symbols-outlined text-sky-600 text-3xl">sensors</span>
+                <span class="text-xs font-bold bg-sky-100 text-sky-700 px-2.5 py-1 rounded-full">Sessions</span>
+            </div>
+            <p class="text-3xl font-black text-slate-900"><?= $activeSessions ?></p>
+            <p class="text-xs text-slate-400 mt-1 font-semibold uppercase tracking-wide">Active Sessions (30m)</p>
         </div>
     </section>
 
@@ -121,9 +161,8 @@ include __DIR__ . '/../includes/admin_header.php';
                     <thead class="bg-slate-50 text-slate-500 text-xs uppercase font-bold">
                         <tr>
                             <th class="px-6 py-3">Property</th>
-                            <th class="px-6 py-3">Owner</th>
-                            <th class="px-6 py-3">Location</th>
-                            <th class="px-6 py-3">Rooms</th>
+                            <th class="px-6 py-3">Region</th>
+                            <th class="px-6 py-3">Status</th>
                             <th class="px-6 py-3">Submitted</th>
                             <th class="px-6 py-3 text-right">Action</th>
                         </tr>
@@ -132,12 +171,18 @@ include __DIR__ . '/../includes/admin_header.php';
                         <?php foreach ($pending as $a): ?>
                         <tr class="hover:bg-slate-50">
                             <td class="px-6 py-4 font-semibold text-slate-900"><?= e($a['name']) ?></td>
+                            <td class="px-6 py-4 text-slate-600"><?= e($a['region'] ?? 'Not specified') ?></td>
                             <td class="px-6 py-4">
-                                <p class="font-medium text-slate-800"><?= e($a['owner_name']) ?></p>
-                                <p class="text-xs text-slate-400"><?= e($a['owner_email']) ?></p>
+                                <?php $sc = match($a['verification_status'] ?? '') {
+                                    'approved' => 'bg-emerald-100 text-emerald-800',
+                                    'pending'  => 'bg-amber-100 text-amber-800',
+                                    'rejected' => 'bg-red-100 text-red-700',
+                                    default    => 'bg-slate-100 text-slate-600',
+                                }; ?>
+                                <span class="inline-block px-2.5 py-1 rounded-full text-xs font-bold <?= $sc ?>">
+                                    <?= e($a['verification_status'] ?? $a['status'] ?? 'pending') ?>
+                                </span>
                             </td>
-                            <td class="px-6 py-4 text-slate-600"><?= e($a['location']) ?></td>
-                            <td class="px-6 py-4 text-slate-600"><?= (int)$a['room_count'] ?></td>
                             <td class="px-6 py-4 text-slate-500 text-xs"><?= date('M d, Y', strtotime($a['created_at'])) ?></td>
                             <td class="px-6 py-4">
                                 <div class="flex items-center justify-end gap-2">

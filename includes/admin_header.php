@@ -54,15 +54,11 @@ $cls = fn(string $p) => 'admin-nav-link flex items-center gap-3 px-4 py-2 ' . ($
                 </a>
                 <a href="<?= base_url('admin/accommodations.php') ?>" class="<?= $cls('accommodations') ?>">
                     <span class="material-symbols-outlined">domain</span>
-                    <span class="text-sm">Accommodations</span>
+                    <span class="text-sm">Property Verification</span>
                 </a>
                 <a href="<?= base_url('admin/users.php') ?>" class="<?= $cls('users') ?>">
                     <span class="material-symbols-outlined">group</span>
-                    <span class="text-sm">Users</span>
-                </a>
-                <a href="<?= base_url('admin/bookings.php') ?>" class="<?= $cls('bookings') ?>">
-                    <span class="material-symbols-outlined">calendar_month</span>
-                    <span class="text-sm">Bookings</span>
+                    <span class="text-sm">User Verification</span>
                 </a>
             </div>
             <p class="admin-section-label text-xs font-bold text-slate-400 uppercase tracking-widest px-4 mt-6 mb-2">System</p>
@@ -70,6 +66,14 @@ $cls = fn(string $p) => 'admin-nav-link flex items-center gap-3 px-4 py-2 ' . ($
                 <a href="<?= base_url('admin/logs.php') ?>" class="<?= $cls('logs') ?>">
                     <span class="material-symbols-outlined">history</span>
                     <span class="text-sm">Activity Logs</span>
+                </a>
+                <a href="<?= base_url('admin/monitoring.php') ?>" class="<?= $cls('monitoring') ?>">
+                    <span class="material-symbols-outlined">analytics</span>
+                    <span class="text-sm">System Monitoring</span>
+                </a>
+                <a href="<?= base_url('admin/settings.php') ?>" class="<?= $cls('settings') ?>">
+                    <span class="material-symbols-outlined">settings</span>
+                    <span class="text-sm">Platform Settings</span>
                 </a>
             </div>
         </nav>
